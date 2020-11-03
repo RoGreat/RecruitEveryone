@@ -15,7 +15,7 @@ namespace RecruitEveryone
         {
             get
             {
-                return 80;
+                return 50;
             }
         }
     }

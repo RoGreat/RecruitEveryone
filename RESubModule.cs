@@ -1,15 +1,12 @@
 ﻿using HarmonyLib;
-using System.Diagnostics;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
-using NoHarmony;
-using TaleWorlds.CampaignSystem.SandBox.GameComponents;
 
 namespace RecruitEveryone
 {
-    internal class RESubModule : NoHarmonyLoader
+    internal class RESubModule : MBSubModuleBase
     {
         private static Harmony _harmony;
 
@@ -21,17 +18,6 @@ namespace RecruitEveryone
             {
                 InformationManager.DisplayMessage(new InformationMessage(message, new Color(0.6f, 0.2f, 1f)));
             }
-        }
-
-        public override void NoHarmonyInit()
-        {
-            LogFile = "RENoHarmony.txt";
-            LogDateFormat = "MM/dd/yy HH:mm:ss.fff";
-        }
-        
-        public override void NoHarmonyLoad()
-        {
-            ReplaceModel<REAgeModel, DefaultAgeModel>();
         }
 
         protected override void OnSubModuleLoad()
