@@ -1,0 +1,6 @@
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\bin\Win64_Shipping_Client\RecruitEveryone.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\bin\Win64_Shipping_Client\RecruitEveryone.pdb
+C:\Users\Justi\Desktop\hireallRE\RecruitEveryone\obj\x64\Debug\RecruitEveryone.csproj.CoreCompileInputs.cache
+C:\Users\Justi\Desktop\hireallRE\RecruitEveryone\obj\x64\Debug\RecruitEveryone.csproj.CopyComplete
+C:\Users\Justi\Desktop\hireallRE\RecruitEveryone\obj\x64\Debug\RecruitEveryone.dll
+C:\Users\Justi\Desktop\hireallRE\RecruitEveryone\obj\x64\Debug\RecruitEveryone.pdb

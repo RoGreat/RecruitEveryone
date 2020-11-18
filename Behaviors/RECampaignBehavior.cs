@@ -135,35 +135,25 @@ namespace RecruitEveryone.Behaviors
                 AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(hero, agentBodyProperties.StaticProperties);
 
                 // Wanderer templates
-                _wandererTemplates = new List<CharacterObject>(from x in CharacterObject.Templates where x.Occupation == Occupation.Wanderer && x.Culture == character.Culture && x.IsFemale == character.IsFemale select x);
+                _wandererTemplates = new List<CharacterObject>(from x in CharacterObject.Templates where x.StringId.Contains("spc_wanderer_") && x.Culture == character.Culture select x);
 
                 int count = _wandererTemplates.Count;
                 int num = MBRandom.RandomInt(count - 1);
 
-                // Set traits
-                int level;
-                foreach (TraitObject trait in DefaultTraits.All)
+                if (!_wandererTemplates.IsEmpty())
                 {
-                    level = _wandererTemplates[num].GetTraitLevel(trait);
-                    hero.SetTraitLevel(trait, level);
-                }
-                int num2;
-                if (age < 20)
-                {
+                    // Set traits
+                    int level;
                     foreach (TraitObject trait in DefaultTraits.All)
                     {
-                        num2 = 12 + 4 * hero.GetTraitLevel(trait);
-                        if (age < num2)
-                        {
-                            age = num2;
-                        }
+                        level = _wandererTemplates[num].GetTraitLevel(trait);
+                        hero.SetTraitLevel(trait, level);
                     }
+                    // After CreateSpecialHero
+                    Campaign.Current.GetCampaignBehavior<IHeroCreationCampaignBehavior>().DeriveSkillsFromTraits(hero, _wandererTemplates[num]);
+                    // Wanderer equipment
+                    AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(hero, _wandererTemplates[num].BattleEquipments.GetRandomElement());
                 }
-
-                // After CreateSpecialHero
-                Campaign.Current.GetCampaignBehavior<IHeroCreationCampaignBehavior>().DeriveSkillsFromTraits(hero, _wandererTemplates[num]);
-                // Wanderer equipment
-                AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(hero, _wandererTemplates[num].BattleEquipments.GetRandomElement());
                 // Civilian equipment
                 // AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(hero, hero.CivilianEquipment);
 
