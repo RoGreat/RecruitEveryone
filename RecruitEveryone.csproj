@@ -260,12 +260,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Patches\AgeModelMaxAgePatch.cs" />
+    <Compile Include="Behaviors\RECampaignBehavior.cs" />
+    <Compile Include="Models\REAgeModel.cs" />
     <Compile Include="Patches\CreateTavernEmployeesPatch.cs" />
     <Compile Include="Patches\CreateTownMerchantsPatch.cs" />
     <Compile Include="Patches\CreateTownsfolkPatch.cs" />
     <Compile Include="Patches\CreateVillagersPatch.cs" />
-    <Compile Include="RECampaignBehavior.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RESubModule.cs" />
   </ItemGroup>

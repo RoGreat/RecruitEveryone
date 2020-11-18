@@ -1,60 +1,50 @@
 ﻿using HarmonyLib;
-using SandBox.Source.Towns;
-using System.Collections.Generic;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.SandBox;
-using TaleWorlds.CampaignSystem.SandBox.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.SandBox.CampaignBehaviors.Towns;
 using TaleWorlds.Core;
-using TaleWorlds.Localization;
+using RecruitEveryone.Models;
+using SandBox.Source.Towns;
 
 namespace RecruitEveryone
 {
     [HarmonyPatch(typeof(TavernEmployeesCampaignBehavior))]
     internal class CreateTavernEmployeesPatch
 	{
-        [HarmonyPrefix]
+        [HarmonyPostfix]
         [HarmonyPatch("CreateTavernWench")]
-		private static bool Prefix1(ref LocationCharacter __result, CultureObject culture, LocationCharacter.CharacterRelations relation)
+		private static void Postfix1(ref LocationCharacter __result)
         {
-			AgentData agentData = new AgentData(new SimpleAgentOrigin(culture.TavernWench, -1, null, default)).Monster(Campaign.Current.HumanMonsterSettlement).Age(MBRandom.RandomInt(Campaign.Current.Models.AgeModel.BecomeTeenagerAge, Campaign.Current.Models.AgeModel.BecomeOldAge));
-			__result = new LocationCharacter(agentData, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors), "sp_tavern_wench", true, relation, "as_human_barmaid", true, false, null, false, false, true)
-			{
-				PrefabNamesForBones =
-				{
-					{
-						agentData.AgentMonster.OffHandItemBoneIndex,
-						"kitchen_pitcher_b_tavern"
-					}
-				}
-			};
-            return false;
+			__result.AgentData.Age(MBRandom.RandomInt(Campaign.Current.Models.AgeModel.HeroComesOfAge, REAgeModel.MaxAge));
 		}
 
-		[HarmonyPrefix]
+		[HarmonyPostfix]
 		[HarmonyPatch("CreateTavernkeeper")]
-		private static bool Prefix2(ref LocationCharacter __result, CultureObject culture, LocationCharacter.CharacterRelations relation)
+		private static void Postfix2(ref LocationCharacter __result)
 		{
-			__result = new LocationCharacter(new AgentData(new SimpleAgentOrigin(culture.Tavernkeeper, -1, null, default)).Monster(Campaign.Current.HumanMonsterSettlement).Age(MBRandom.RandomInt(Campaign.Current.Models.AgeModel.HeroComesOfAge, Campaign.Current.Models.AgeModel.MaxAge)), new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors), "spawnpoint_tavernkeeper", true, relation, "as_human_tavern_keeper", true, false, null, false, false, true);
-			return false;
+			__result.AgentData.Age(MBRandom.RandomInt(Campaign.Current.Models.AgeModel.HeroComesOfAge, REAgeModel.MaxAge));
 		}
 
-
-		[HarmonyPrefix]
+		[HarmonyPostfix]
 		[HarmonyPatch("CreateMusician")]
-		private static bool Prefix3(ref LocationCharacter __result, CultureObject culture, LocationCharacter.CharacterRelations relation)
+		private static void Postfix3(ref LocationCharacter __result)
 		{
-			__result = new LocationCharacter(new AgentData(new SimpleAgentOrigin(culture.Musician, -1, null, default)).Monster(Campaign.Current.HumanMonsterSettlement).Age(MBRandom.RandomInt(Campaign.Current.Models.AgeModel.BecomeTeenagerAge, Campaign.Current.Models.AgeModel.MaxAge)), new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors), "musician", true, relation, "as_human_musician", true, true, null, false, false, true);
-            return false;
-        }
+			__result.AgentData.Age(MBRandom.RandomInt(Campaign.Current.Models.AgeModel.HeroComesOfAge, REAgeModel.MaxAge));
+		}
 
-		[HarmonyPrefix]
+		[HarmonyPostfix]
 		[HarmonyPatch("CreateRansomBroker")]
-		private static bool Prefix4(ref LocationCharacter __result, CultureObject culture, LocationCharacter.CharacterRelations relation)
+		private static void Postfix4(ref LocationCharacter __result)
 		{
-			__result = new LocationCharacter(new AgentData(new SimpleAgentOrigin(culture.RansomBroker, -1, null, default)).Monster(Campaign.Current.HumanMonsterSettlement).Age(MBRandom.RandomInt(Campaign.Current.Models.AgeModel.HeroComesOfAge, Campaign.Current.Models.AgeModel.MaxAge)), new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddOutdoorWandererBehaviors), "npc_common", true, relation, null, true, false, null, false, false, true);
-			return false;
+			__result.AgentData.Age(MBRandom.RandomInt(Campaign.Current.Models.AgeModel.HeroComesOfAge, REAgeModel.MaxAge));
 		}
     }
+
+	[HarmonyPatch(typeof(BoardGameCampaignBehavior), "CreateGameHost")]
+	internal class CreateGameHostPatch
+	{
+		private static void Postfix(ref LocationCharacter __result)
+		{
+			__result.AgentData.Age(MBRandom.RandomInt(Campaign.Current.Models.AgeModel.BecomeOldAge, REAgeModel.MaxAge));
+		}
+	}
 }
