@@ -4,3 +4,4 @@ C:\Users\Justi\Desktop\hireallRE\RecruitEveryone\obj\x64\Debug\RecruitEveryone.c
 C:\Users\Justi\Desktop\hireallRE\RecruitEveryone\obj\x64\Debug\RecruitEveryone.csproj.CopyComplete
 C:\Users\Justi\Desktop\hireallRE\RecruitEveryone\obj\x64\Debug\RecruitEveryone.dll
 C:\Users\Justi\Desktop\hireallRE\RecruitEveryone\obj\x64\Debug\RecruitEveryone.pdb
+C:\Users\Justi\Desktop\hireallRE\RecruitEveryone\obj\x64\Debug\RecruitEveryone.csprojAssemblyReference.cache

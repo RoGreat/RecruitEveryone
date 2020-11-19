@@ -261,6 +261,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Behaviors\RECampaignBehavior.cs" />
+    <Compile Include="Models\RECompanionHiringPriceCalculationModel.cs" />
     <Compile Include="Models\REAgeModel.cs" />
     <Compile Include="Patches\CreateTavernEmployeesPatch.cs" />
     <Compile Include="Patches\CreateTownMerchantsPatch.cs" />

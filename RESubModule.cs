@@ -11,7 +11,7 @@ namespace RecruitEveryone
     {
         private static Harmony _harmony;
 
-        private static bool _log = false;
+        private static readonly bool _log = false;
 
         public static void Debug(string message)
         {
