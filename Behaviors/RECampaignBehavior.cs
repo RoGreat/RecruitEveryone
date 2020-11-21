@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using HarmonyLib;
 using MountAndBlade.CampaignBehaviors;
@@ -109,6 +110,10 @@ namespace RecruitEveryone.Behaviors
                     _characterTemplates.TryGetValue(_agent, out _wandererTemplate);
 				}
 			}
+			else
+            {
+				_wandererTemplate = _character;
+            }
 
 			_battleEquipment = _wandererTemplate.BattleEquipments.GetRandomElement<Equipment>();
 			AdjustEquipmentImp(_battleEquipment);
@@ -231,6 +236,21 @@ namespace RecruitEveryone.Behaviors
 			{
 				hero = Hero.OneToOneConversationHero;
 				AccessTools.Property(typeof(CharacterObject), "Occupation").SetValue(hero.CharacterObject, Occupation.Wanderer);
+			}
+
+			// Notable fixes for the most part
+			foreach (PartyBase party in hero.OwnedParties.ToList())
+			{
+				MobileParty mobileParty = party.MobileParty;
+				if (mobileParty != null)
+				{
+					mobileParty.CurrentSettlement = mobileParty.HomeSettlement;
+					DisbandPartyAction.ApplyDisband(mobileParty);
+				}
+			}
+			if (hero.Issue != null)
+			{
+				hero.Issue.CompleteIssueWithCancel();
 			}
 
 			GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, hero, RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(_character, _wandererTemplate, _battleEquipment), false);
