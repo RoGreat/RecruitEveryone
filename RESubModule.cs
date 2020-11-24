@@ -9,8 +9,6 @@ namespace RecruitEveryone
 {
     internal class RESubModule : MBSubModuleBase
     {
-        private static Harmony _harmony;
-
         private static readonly bool _log = false;
 
         public static void Debug(string message)
@@ -24,14 +22,7 @@ namespace RecruitEveryone
         protected override void OnSubModuleLoad()
         {
             base.OnSubModuleLoad();
-            _harmony = new Harmony("mod.bannerlord.everyone.recruit");
-            _harmony.PatchAll();
-        }
-
-        protected override void OnSubModuleUnloaded()
-        {
-            base.OnSubModuleUnloaded();
-            _harmony.UnpatchAll();
+            new Harmony("mod.bannerlord.everyone.recruit").PatchAll();
         }
 
         protected override void OnGameStart(Game game, IGameStarter gameStarter)
