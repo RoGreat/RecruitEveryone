@@ -205,13 +205,11 @@ namespace RecruitEveryone.Behaviors
                 _recruitedAgents.Add(_agent);
 				Agent agent = (Agent)MissionConversationHandler.Current.ConversationManager.OneToOneConversationAgent;
 
-				RESubModule.Debug("Character Age: " + _character.Age.ToString() + " Agent Age: " + agent.Age.ToString());
 				int age = MBMath.ClampInt((int)agent.Age, Campaign.Current.Models.AgeModel.BecomeTeenagerAge, REAgeModel.MaxAge);
 
 				hero = HeroCreator.CreateSpecialHero(_character, Settlement.CurrentSettlement, null, null, age);
 
 				BodyProperties bodyPropertiesValue = agent.BodyPropertiesValue;
-				RESubModule.Debug("DynamicProperties: " + bodyPropertiesValue.DynamicProperties.ToString());
 				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(hero, bodyPropertiesValue.StaticProperties);
 
 				foreach (TraitObject trait in DefaultTraits.All)
