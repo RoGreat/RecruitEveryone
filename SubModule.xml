@@ -1,7 +1,7 @@
 ﻿<Module>
 	<Name value="Recruit Everyone"/>
 	<Id value="RecruitEveryone"/>
-	<Version value="v1.0.0"/>
+	<Version value="v1.0.4"/>
 	<SingleplayerModule value="true"/>
 	<MultiplayerModule value="false"/>
 	<DependedModules>
@@ -16,18 +16,7 @@
 			<Name value="RecruitEveryone"/>
 			<DLLName value="RecruitEveryone.dll"/>
 			<SubModuleClassType value="RecruitEveryone.RESubModule"/>
-			<Tags>
-				<Tag key="DedicatedServerType" value="none" />
-				<Tag key="IsNoRenderModeElement" value="false" />
-			</Tags>
+			<Tags />
 		</SubModule>
 	</SubModules>
-		<Xmls>
-		<XmlName id="NPCCharacters" path="re_spnpccharacters"/>
-		<IncludedGameTypes>
-			<GameType value = "Campaign"/>
-			<GameType value = "CampaignStoryMode"/>
-			<GameType value = "CustomGame"/>
-		</IncludedGameTypes>
-	</Xmls>
 </Module>

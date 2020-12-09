@@ -45,8 +45,8 @@ namespace RecruitEveryone.Behaviors
 
 			RecruitCharacter(starter, "hero_main_options", "lord_pretalk");
 			RecruitCharacter(starter, "tavernkeeper_talk", "tavernkeeper_pretalk");
-			RecruitCharacter(starter, "tavernmaid_talk", "close_window");
-			RecruitCharacter(starter, "talk_bard_player", "close_window");
+			RecruitCharacter(starter, "tavernmaid_talk");
+			RecruitCharacter(starter, "talk_bard_player");
 			RecruitCharacter(starter, "taverngamehost_talk", "start");
 			RecruitCharacter(starter, "town_or_village_player", "town_or_village_pretalk");
 			RecruitCharacter(starter, "weaponsmith_talk_player", "merchant_response_3");
@@ -95,7 +95,7 @@ namespace RecruitEveryone.Behaviors
 
 			if (Hero.OneToOneConversationHero == null)
 			{
-				_wandererTemplates = new List<CharacterObject>(from x in CharacterObject.Templates where x.StringId.Contains("spc_wanderer_") && x.Culture == _character.Culture select x);
+				_wandererTemplates = new List<CharacterObject>(from x in CharacterObject.Templates where x.Occupation == Occupation.Wanderer && x.Culture == _character.Culture select x);
 				if (_characterTemplates == null)
 				{
 					_characterTemplates = new Dictionary<int, CharacterObject>();
@@ -113,8 +113,7 @@ namespace RecruitEveryone.Behaviors
             {
 				_wandererTemplate = _character;
             }
-
-			_battleEquipment = _wandererTemplate.BattleEquipments.GetRandomElement<Equipment>();
+			_battleEquipment = _wandererTemplate.BattleEquipments.GetRandomElement();
 			AdjustEquipmentImp(_battleEquipment);
 
 			MBTextManager.SetTextVariable("GOLD_AMOUNT", RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(_character, _wandererTemplate, _battleEquipment));
@@ -161,13 +160,13 @@ namespace RecruitEveryone.Behaviors
 					{
 						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, @object);
 					}
-					else if (equipmentElement.Item.HorseComponent != null)
-					{
-						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, object3);
-					}
 					else if (equipmentElement.Item.WeaponComponent != null)
 					{
 						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, object2);
+					}
+					else if (equipmentElement.Item.HorseComponent != null)
+					{
+						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, object3);
 					}
 				}
 			}
@@ -175,7 +174,6 @@ namespace RecruitEveryone.Behaviors
 
 		private bool conversation_hero_hire_on_condition()
 		{
-			bool result;
 			if (Hero.OneToOneConversationHero == null)
 			{
 				_agent = Math.Abs(Campaign.Current.ConversationManager.OneToOneConversationAgent.GetHashCode());
@@ -187,14 +185,9 @@ namespace RecruitEveryone.Behaviors
 				{
 					return false;
 				}
-				result = true;
+				return true;
 			}
-			else
-			{
-				bool isNotable = Hero.OneToOneConversationHero.IsNotable;
-				result = isNotable;
-			}
-			return result;
+			return Hero.OneToOneConversationHero.IsNotable;
 		}
 
 		private void conversation_companion_hire_on_consequence()
@@ -205,7 +198,7 @@ namespace RecruitEveryone.Behaviors
                 _recruitedAgents.Add(_agent);
 				Agent agent = (Agent)MissionConversationHandler.Current.ConversationManager.OneToOneConversationAgent;
 
-				int age = MBMath.ClampInt((int)agent.Age, Campaign.Current.Models.AgeModel.BecomeTeenagerAge, REAgeModel.MaxAge);
+				int age = MBMath.ClampInt((int)agent.Age, Campaign.Current.Models.AgeModel.HeroComesOfAge, REAgeModel.MaxAge);
 
 				hero = HeroCreator.CreateSpecialHero(_character, Settlement.CurrentSettlement, null, null, age);
 
@@ -220,7 +213,6 @@ namespace RecruitEveryone.Behaviors
 				AccessTools.Property(typeof(CharacterObject), "Occupation").SetValue(hero.CharacterObject, Occupation.Wanderer);
 				Campaign.Current.GetCampaignBehavior<IHeroCreationCampaignBehavior>().DeriveSkillsFromTraits(hero, null);
 				AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(hero, _battleEquipment);
-
 				if (CampaignMission.Current.Location != null && CampaignMission.Current.Location.StringId == "tavern")
 				{
 					Location location = CampaignMission.Current.Location;
@@ -249,7 +241,6 @@ namespace RecruitEveryone.Behaviors
 			{
 				hero.Issue.CompleteIssueWithCancel();
 			}
-
 			GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, hero, RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(_character, _wandererTemplate, _battleEquipment), false);
 			AddCompanionAction.Apply(Clan.PlayerClan, hero);
 			AddHeroToPartyAction.Apply(hero, MobileParty.MainParty, true);

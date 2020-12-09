@@ -8,9 +8,8 @@ namespace RecruitEveryone.Models
     {
 		public static int GetCompanionHiringPrice(CharacterObject character, CharacterObject templateCharacter, Equipment battleEquipment)
 		{
-			Hero mainHero = Hero.MainHero;
 			ExplainedNumber explainedNumber = new ExplainedNumber(0f, null);
-			Settlement currentSettlement = mainHero.CurrentSettlement;
+			Settlement currentSettlement = Hero.MainHero.CurrentSettlement;
 			Town town = currentSettlement?.Town;
 			if (town == null)
 			{
@@ -39,7 +38,7 @@ namespace RecruitEveryone.Models
 			{
 				explainedNumber.AddFactor(DefaultPerks.Steward.PaidInPromise.PrimaryBonus * 0.01f, null);
 			}
-			if (mainHero != null && mainHero.PartyBelongedTo.HasPerk(DefaultPerks.Trade.GreatInvestor, false))
+			if (Hero.MainHero.PartyBelongedTo.HasPerk(DefaultPerks.Trade.GreatInvestor, false))
 			{
 				PerkHelper.AddPerkBonusForParty(DefaultPerks.Trade.GreatInvestor, Hero.MainHero.PartyBelongedTo, false, ref explainedNumber);
 			}
