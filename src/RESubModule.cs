@@ -16,17 +16,17 @@ namespace RecruitEveryone
 
         protected override void OnGameStart(Game game, IGameStarter gameStarter)
         {
-            base.OnGameLoaded(game, gameStarter);
-            if (game.GameType is Campaign && gameStarter is CampaignGameStarter starter)
+            base.OnGameStart(game, gameStarter);
+            if (game.GameType is Campaign)
             {
-                CampaignGameStarter gameInitializer = starter;
-                AddBehaviors(gameInitializer);
+                CampaignGameStarter campaignGameStarter = (CampaignGameStarter)gameStarter;
+                AddBehaviors(campaignGameStarter);
             }
         }
 
-        private void AddBehaviors(CampaignGameStarter gameInitializer)
+        private void AddBehaviors(CampaignGameStarter campaignGameStarter)
         {
-            gameInitializer.AddBehavior(new RECampaignBehavior());
+            campaignGameStarter.AddBehavior(new RECampaignBehavior());
         }
     }
 }

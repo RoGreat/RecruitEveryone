@@ -15,6 +15,8 @@ C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Module
 C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\obj\x64\Debug\RecruitEveryone.csproj.CopyComplete
 C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\obj\x64\Debug\RecruitEveryone.dll
 C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\obj\x64\Debug\RecruitEveryone.pdb
-C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\bin\Win64_Shipping_Client\0Harmony.dll
-C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\bin\Win64_Shipping_Client\0Harmony.xml
 C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\obj\x64\Debug\RecruitEveryone.csprojAssemblyReference.cache
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\src\obj\x64\Debug\RecruitEveryone.csproj.CoreCompileInputs.cache
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\src\obj\x64\Debug\RecruitEveryone.csproj.CopyComplete
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\src\obj\x64\Debug\RecruitEveryone.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\RecruitEveryone\src\obj\x64\Debug\RecruitEveryone.pdb
