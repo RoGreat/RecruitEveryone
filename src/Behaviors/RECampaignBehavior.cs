@@ -335,13 +335,13 @@ namespace RecruitEveryone.Behaviors
 
 		public void OnSessionLaunched(CampaignGameStarter campaignGameStarter)
 		{
+			_recruitedAgents = new List<int>();
+			_characterTemplates = new Dictionary<int, CharacterObject>();
 			AddDialogs(campaignGameStarter);
 		}
 
 		public override void RegisterEvents()
 		{
-			_recruitedAgents = new List<int>();
-			_characterTemplates = new Dictionary<int, CharacterObject>();
 			CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, new Action<CampaignGameStarter>(OnSessionLaunched));
 		}
 		public override void SyncData(IDataStore dataStore)
