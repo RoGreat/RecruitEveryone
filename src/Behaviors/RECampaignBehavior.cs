@@ -4,7 +4,6 @@ using System.Linq;
 using HarmonyLib;
 using MountAndBlade.CampaignBehaviors;
 using RecruitEveryone.Models;
-using SandBox;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.Core;
@@ -19,20 +18,24 @@ namespace RecruitEveryone.Behaviors
 	{
 		private static Dictionary<int, CharacterObject> _characterTemplates;
 
-		private List<CharacterObject> _wandererTemplates;
+		private static List<CharacterObject> _wandererTemplates;
 
-		private CharacterObject _wandererTemplate;
-
-		private Equipment _battleEquipment;
+		private static CharacterObject _wandererTemplate;
 
 		private static List<int> _recruitedAgents;
 
-		private CharacterObject _character;
+		private static CharacterObject _character;
 
-		private int _agent;
+		private static int _agent;
+
+		private static Equipment _battleEquipment;
 
 		protected void AddDialogs(CampaignGameStarter starter)
 		{
+			// For last version conversion...
+			// Just change occupation. Not an easy solution otherwise with current system in place...
+			// Maybe add in a template???
+			// I don't want to!
 			foreach (Hero hero in Hero.All)
 			{
 				if (hero.CharacterObject.Occupation != Occupation.Wanderer && hero.IsPlayerCompanion)
@@ -53,6 +56,7 @@ namespace RecruitEveryone.Behaviors
 			RecruitCharacter(starter, "barber_question1", "no_haircut_conversation_token");
 			RecruitCharacter(starter, "shopworker_npc_player", "start_2");
 			RecruitCharacter(starter, "blacksmith_player", "player_blacksmith_after_craft");
+			RecruitCharacter(starter, "alley_talk_start");
 		}
 
 		private bool conversation_wanderer_skip_preintroduction_on_condition()
@@ -95,25 +99,26 @@ namespace RecruitEveryone.Behaviors
 
 			if (Hero.OneToOneConversationHero == null)
 			{
-				_wandererTemplates = new List<CharacterObject>(from x in CharacterObject.Templates where x.Occupation == Occupation.Wanderer && x.Culture == _character.Culture select x);
-				if (_characterTemplates == null)
-				{
-					_characterTemplates = new Dictionary<int, CharacterObject>();
-				}
+				_wandererTemplates = new List<CharacterObject>(from x in CharacterObject.Templates where x.Occupation == Occupation.Wanderer && x.Culture == Settlement.CurrentSettlement.Culture select x);
 				if (!_characterTemplates.TryGetValue(_agent, out _wandererTemplate))
 				{
-					int count = _wandererTemplates.Count;
-					int index = MBRandom.RandomInt(count - 1);
-					_wandererTemplate = _wandererTemplates[index];
-                    _characterTemplates.Add(_agent, _wandererTemplate);
-                    _characterTemplates.TryGetValue(_agent, out _wandererTemplate);
+					if (_character.IsFemale)
+					{
+						_wandererTemplate = _wandererTemplates.Where(character => character.IsFemale).GetRandomElement();
+					}
+					else
+					{
+						_wandererTemplate = _wandererTemplates.Where(character => !character.IsFemale).GetRandomElement();
+					}
+					_characterTemplates.Add(_agent, _wandererTemplate);
+					_characterTemplates.TryGetValue(_agent, out _wandererTemplate);
 				}
 			}
 			else
             {
 				_wandererTemplate = _character;
             }
-			_battleEquipment = _wandererTemplate.BattleEquipments.GetRandomElement();
+			_battleEquipment = _wandererTemplate.FirstBattleEquipment;
 			AdjustEquipmentImp(_battleEquipment);
 
 			MBTextManager.SetTextVariable("GOLD_AMOUNT", RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(_character, _wandererTemplate, _battleEquipment));
@@ -174,14 +179,14 @@ namespace RecruitEveryone.Behaviors
 
 		private bool conversation_hero_hire_on_condition()
 		{
+			if (Campaign.Current.ConversationManager.OneToOneConversationAgent.Age < Campaign.Current.Models.AgeModel.HeroComesOfAge)
+            {
+				return false;
+            }
 			if (Hero.OneToOneConversationHero == null)
 			{
 				_agent = Math.Abs(Campaign.Current.ConversationManager.OneToOneConversationAgent.GetHashCode());
-				if (_recruitedAgents == null)
-				{
-                    _recruitedAgents = new List<int>();
-				}
-				else if (_recruitedAgents.Contains(_agent))
+				if (_recruitedAgents.Contains(_agent))
 				{
 					return false;
 				}
@@ -196,27 +201,32 @@ namespace RecruitEveryone.Behaviors
 			if (Hero.OneToOneConversationHero == null)
 			{
                 _recruitedAgents.Add(_agent);
-				Agent agent = (Agent)MissionConversationHandler.Current.ConversationManager.OneToOneConversationAgent;
-
+				Agent agent = (Agent)Campaign.Current.ConversationManager.OneToOneConversationAgent;
 				int age = MBMath.ClampInt((int)agent.Age, Campaign.Current.Models.AgeModel.HeroComesOfAge, REAgeModel.MaxAge);
-
-				hero = HeroCreator.CreateSpecialHero(_character, Settlement.CurrentSettlement, null, null, age);
-
-				BodyProperties bodyPropertiesValue = agent.BodyPropertiesValue;
-				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(hero, bodyPropertiesValue.StaticProperties);
-
+				hero = HeroCreator.CreateSpecialHero(_wandererTemplate, Settlement.CurrentSettlement, null, null, age);
 				foreach (TraitObject trait in DefaultTraits.All)
 				{
 					int traitLevel = _wandererTemplate.GetTraitLevel(trait);
 					hero.SetTraitLevel(trait, traitLevel);
 				}
-				AccessTools.Property(typeof(CharacterObject), "Occupation").SetValue(hero.CharacterObject, Occupation.Wanderer);
-				Campaign.Current.GetCampaignBehavior<IHeroCreationCampaignBehavior>().DeriveSkillsFromTraits(hero, null);
-				AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(hero, _battleEquipment);
-				if (CampaignMission.Current.Location != null && CampaignMission.Current.Location.StringId == "tavern")
+				Campaign.Current.GetCampaignBehavior<IHeroCreationCampaignBehavior>().DeriveSkillsFromTraits(hero, _wandererTemplate);
+				
+				// In NameGenerator
+				TextObject textObject = new TextObject("{=nameoccupation}{FIRST_NAME}{OCCUPATION}");
+				textObject.SetTextVariable("FIRST_NAME", hero.FirstName);
+				textObject.SetTextVariable("OCCUPATION", FormerOccupation());
+				hero.CharacterObject.Name = textObject;
+
+				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(hero, agent.BodyPropertiesValue.StaticProperties);
+				AccessTools.Property(typeof(Hero), "CivilianEquipment").SetValue(hero, agent.SpawnEquipment);
+
+				if (CampaignMission.Current.Location != null)
 				{
-					Location location = CampaignMission.Current.Location;
-					location.RemoveLocationCharacter(location.GetLocationCharacter(agent.Origin));
+					if (CampaignMission.Current.Location.StringId == "tavern")
+					{
+						Location location = CampaignMission.Current.Location;
+						location.RemoveLocationCharacter(location.GetLocationCharacter(agent.Origin));
+					}
 				}
 				hero.HasMet = true;
 				hero.ChangeState(Hero.CharacterStates.Active);
@@ -247,6 +257,82 @@ namespace RecruitEveryone.Behaviors
 			CampaignEventDispatcher.Instance.OnHeroCreated(hero, false);
 		}
 
+		private static TextObject FormerOccupation()
+        {
+            TextObject textObject;
+            switch (_character.Occupation)
+			{
+				// Tavern Employees:
+				case Occupation.Tavernkeeper:
+					textObject = new TextObject("{=thetavernkeeper} the Tavernkeeper");
+					break;
+				case Occupation.TavernWench:
+					textObject = new TextObject("{=thetavernmaid} the Tavern Maid");
+					break;
+				case Occupation.Musician:
+					textObject = new TextObject("{=themusician} the Musician");
+					break;
+				case Occupation.TavernGameHost:
+					textObject = new TextObject("{=thegamehost} the Game Host");
+					break;
+				// Traders:
+				case Occupation.GoodsTrader:
+					textObject = new TextObject("{=thetrader} the Trader");
+					break;
+				case Occupation.Weaponsmith:
+					textObject = new TextObject("{=theweaponsmith} the Weaponsmith");
+					break;
+				case Occupation.Armorer:
+					textObject = new TextObject("{=thearmorer} the Armorer");
+					break;
+				case Occupation.HorseTrader:
+					textObject = new TextObject("{=thehorsetrader} the Horse Trader");
+					break;
+				case Occupation.Blacksmith:
+					textObject = new TextObject("{=theblacksmith} the Blacksmith");
+					break;
+				// IsNotable defined as: this.IsArtisan || this.IsGangLeader || this.IsPreacher || this.IsMerchant || this.IsRuralNotable || this.IsHeadman. Should already have a name so don't bother.
+				case Occupation.ShopWorker:
+					textObject = new TextObject("{=theshopworker} the Shop Worker");
+					break;
+				// New possible recruit!
+				case Occupation.Gangster:
+					textObject = new TextObject("{=thethug} the Thug");
+					break;
+				default:
+					textObject = new TextObject();
+					break;
+			}
+			if (IsConversationAgentBarber())
+			{
+				textObject = new TextObject("{=thebarber} the Barber");
+			}
+			if (IsConversationAgentDancer())
+			{
+				textObject = new TextObject("{=thedancer} the Dancer");
+			}
+			if (IsConversationAgentBeggar())
+			{
+				textObject = new TextObject("{=thebeggar} the Beggar");
+			}
+			return textObject;
+        }
+
+		private static bool IsConversationAgentBeggar()
+		{
+			return Settlement.CurrentSettlement.Culture.Beggar == CharacterObject.OneToOneConversationCharacter || Settlement.CurrentSettlement.Culture.FemaleBeggar == CharacterObject.OneToOneConversationCharacter;
+		}
+
+		private static bool IsConversationAgentDancer()
+		{
+			return Settlement.CurrentSettlement.Culture.FemaleDancer == CharacterObject.OneToOneConversationCharacter;
+		}
+
+		private static bool IsConversationAgentBarber()
+		{
+			return Settlement.CurrentSettlement.Culture.Barber == CharacterObject.OneToOneConversationCharacter;
+		}
+
 		public void OnSessionLaunched(CampaignGameStarter campaignGameStarter)
 		{
 			AddDialogs(campaignGameStarter);
@@ -254,6 +340,8 @@ namespace RecruitEveryone.Behaviors
 
 		public override void RegisterEvents()
 		{
+			_recruitedAgents = new List<int>();
+			_characterTemplates = new Dictionary<int, CharacterObject>();
 			CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, new Action<CampaignGameStarter>(OnSessionLaunched));
 		}
 		public override void SyncData(IDataStore dataStore)

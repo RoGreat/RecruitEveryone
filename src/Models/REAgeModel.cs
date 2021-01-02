@@ -1,5 +1,6 @@
 ﻿using TaleWorlds.Core;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.Library;
 
 namespace RecruitEveryone.Models
 {
@@ -9,11 +10,15 @@ namespace RecruitEveryone.Models
 
         private static readonly int _oldAge = Campaign.Current.Models.AgeModel.BecomeOldAge;
 
+        private static readonly int _maxAge = Campaign.Current.Models.AgeModel.MaxAge;
+
+        public static int configMaxAge { get; set; } = 80;
+
         public static int MaxAge
         {
             get
             {
-                return 80;
+                return MBMath.ClampInt(configMaxAge, _oldAge, _maxAge);
             }
         }
 
