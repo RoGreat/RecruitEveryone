@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
-VisualStudioVersion = 16.0.30621.155
+VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecruitEveryone", "src\RecruitEveryone.csproj", "{AF64EDCA-2639-40D1-8B91-EEF7AC5790C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecruitEveryone", "RecruitEveryone.csproj", "{27A070E2-262E-45C0-8A53-C9F20C5E887D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{AF64EDCA-2639-40D1-8B91-EEF7AC5790C7}.Debug|x64.ActiveCfg = Debug|x64
-		{AF64EDCA-2639-40D1-8B91-EEF7AC5790C7}.Debug|x64.Build.0 = Debug|x64
-		{AF64EDCA-2639-40D1-8B91-EEF7AC5790C7}.Release|x64.ActiveCfg = Release|x64
-		{AF64EDCA-2639-40D1-8B91-EEF7AC5790C7}.Release|x64.Build.0 = Release|x64
+		{27A070E2-262E-45C0-8A53-C9F20C5E887D}.Debug|x64.ActiveCfg = Debug|x64
+		{27A070E2-262E-45C0-8A53-C9F20C5E887D}.Debug|x64.Build.0 = Debug|x64
+		{27A070E2-262E-45C0-8A53-C9F20C5E887D}.Release|x64.ActiveCfg = Release|x64
+		{27A070E2-262E-45C0-8A53-C9F20C5E887D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {CA739DEC-30D5-4F1D-80B7-FD0CFA69B779}
+		SolutionGuid = {72EF6D92-84EA-44A8-B850-423DD992D4C9}
 	EndGlobalSection
 EndGlobal
