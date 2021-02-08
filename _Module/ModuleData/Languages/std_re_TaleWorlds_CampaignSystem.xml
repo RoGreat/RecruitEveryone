@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="string">
+  <tags>
+    <tag language="English" />
+  </tags>
+  <strings>
+		<string id="nameoccupation" text="{FIRST_NAME}{OCCUPATION}" />
+		<string id="thetavernkeeper" text=" the Tavern Keeper" />
+		<string id="thetavernmaid" text=" the Tavern Maid" />
+		<string id="themusician" text=" the Musician" />
+		<string id="thegamehost" text=" the Game Host" />
+		<string id="thetrader" text=" the Trader" />
+		<string id="theweaponsmith" text=" the Weaponsmith" />
+		<string id="thearmorer" text=" the Armorer" />
+		<string id="thehorsetrader" text=" the Horse Trader" />
+		<string id="theblacksmith" text=" the Blacksmith" />
+		<string id="theshopworker" text=" the Shop Worker" />
+		<string id="thethug" text=" the Thug" />
+		<string id="thebarber" text=" the Barber" />
+		<string id="thedancer" text=" the Dancer" />
+		<string id="thebeggar" text=" the Beggar" />
+	</strings>
+</base>
