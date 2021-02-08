@@ -6,7 +6,6 @@
 		<Version>1.1.0</Version>
 		<GameVersion>1.5.7</GameVersion>
 		<Authors>RoGreat</Authors>
-		<GenerateAssemblyinfo>false</GenerateAssemblyinfo>
 	</PropertyGroup>
 	
 	<!-- Setup -->
@@ -26,6 +25,7 @@
     <!--Unix-->
     <GameFolder Condition="$(GameFolder) == '' AND $(OS) == 'Unix'">~/.steam/root/steamapps/common/Mount &amp; Blade II Bannerlord</GameFolder>
     <Company />
+    <PackageId>RecruitEveryone</PackageId>
   </PropertyGroup>
 
   <!-- NuGet References -->
