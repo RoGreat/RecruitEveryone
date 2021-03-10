@@ -101,11 +101,11 @@ namespace RecruitEveryone.Behaviors
 				{
 					if (character.IsFemale)
                     {
-						_wandererTemplate = _wandererTemplates.Where(character => character.IsFemale).GetRandomElement();
+						_wandererTemplate = _wandererTemplates.Where(character => character.IsFemale).GetRandomElementInefficiently();
 					}
 					else
                     {
-						_wandererTemplate = _wandererTemplates.Where(character => !character.IsFemale).GetRandomElement();
+						_wandererTemplate = _wandererTemplates.Where(character => !character.IsFemale).GetRandomElementInefficiently();
 					}
 					AddTemplate:
 					if (_wandererTemplate is not null)
@@ -257,6 +257,8 @@ namespace RecruitEveryone.Behaviors
 			}
 
 			// Notable fixes for the most part
+			// OwnedParties does not exist in e1.5.8, a shame too
+			/*
 			foreach (PartyBase party in hero.OwnedParties.ToList())
 			{
 				MobileParty mobileParty = party.MobileParty;
@@ -264,6 +266,18 @@ namespace RecruitEveryone.Behaviors
 				{
 					mobileParty.CurrentSettlement = mobileParty.HomeSettlement;
 					DisbandPartyAction.ApplyDisband(mobileParty);
+				}
+			}
+			*/
+
+			foreach (CaravanPartyComponent caravanParty in hero.OwnedCaravans.ToList())
+			{
+				MobileParty mobileParty = caravanParty.MobileParty;
+				if (mobileParty is not null)
+				{
+					// Even when transferring caravan ownership, game crashes when disbanding the caravan
+					// Reported that this IS a legitimate crash that TaleWorlds are looking into in e1.5.8
+					CaravanPartyComponent.TransferCaravanOwnership(mobileParty, Hero.MainHero);
 				}
 			}
 			if (hero.Issue is not null)
