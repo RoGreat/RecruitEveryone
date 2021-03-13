@@ -6,8 +6,10 @@ using MountAndBlade.CampaignBehaviors;
 using RecruitEveryone.Models;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.SandBox.CampaignBehaviors;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+using TaleWorlds.LinQuick;
 using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.ObjectSystem;
@@ -16,25 +18,43 @@ namespace RecruitEveryone.Behaviors
 {
 	internal class RECampaignBehavior : CampaignBehaviorBase
 	{
-		private static Dictionary<int, CharacterObject>? _characterTemplates;
+		public MBReadOnlyList<CharacterObject>? WandererTemplates { get; private set; }
 
-		private static List<CharacterObject>? _wandererTemplates;
+		private Dictionary<int, CharacterObject>? _characterTemplates;
 
-		private static CharacterObject? _wandererTemplate;
+		private List<CharacterObject>? _wandererTemplates;
 
-		private static List<int>? _recruitedAgents;
+		private CharacterObject? _wandererTemplate;
 
-		private static int _agent;
+		private CharacterObject? _characterTemplate;
 
-		private static Equipment? _battleEquipment;
+		private List<int>? _recruitedAgents;
+
+		private int _agent;
+
+		private Equipment? _battleEquipment;
+
+		private void RemoveNotable(Hero hero)
+        {
+			List<Hero> _notables = (List<Hero>)AccessTools.Field(typeof(NotablePowerManagementBehavior), "_notables").GetValue(Campaign.Current.GetCampaignBehavior<NotablePowerManagementBehavior>());
+			_notables.Remove(hero);
+			AccessTools.Field(typeof(NotablePowerManagementBehavior), "_notables").SetValue(Campaign.Current.GetCampaignBehavior<NotablePowerManagementBehavior>(), _notables);
+		}
 
 		protected void AddDialogs(CampaignGameStarter starter)
 		{
 			foreach (Hero hero in Hero.All)
 			{
-				if (hero.CharacterObject.Occupation != Occupation.Wanderer && hero.IsPlayerCompanion)
+				if (hero.IsPlayerCompanion)
 				{
-					AccessTools.Property(typeof(CharacterObject), "Occupation").SetValue(hero.CharacterObject, Occupation.Wanderer);
+					if (hero.IsNotable)
+					{
+						RemoveNotable(hero);
+					}
+					if (hero.CharacterObject.Occupation != Occupation.Wanderer)
+					{
+						AccessTools.Property(typeof(CharacterObject), "Occupation").SetValue(hero.CharacterObject, Occupation.Wanderer);
+					}
 				}
 			}
 
@@ -76,10 +96,10 @@ namespace RecruitEveryone.Behaviors
 
 		private bool conversation_companion_hire_on_condition()
 		{
-			GameTexts.SetVariable("STR1", RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(CharacterObject.OneToOneConversationCharacter, _wandererTemplate!, _battleEquipment!));
+			GameTexts.SetVariable("STR1", RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(CharacterObject.OneToOneConversationCharacter, _characterTemplate!, _battleEquipment!));
 			GameTexts.SetVariable("STR2", "{=!}<img src=\"Icons\\Coin@2x\">");
 			MBTextManager.SetTextVariable("GOLD_AMOUNT", GameTexts.FindText("str_STR1_STR2", null), false);
-			return Hero.MainHero.Gold > RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(CharacterObject.OneToOneConversationCharacter, _wandererTemplate!, _battleEquipment!) && !too_many_companions();
+			return Hero.MainHero.Gold > RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(CharacterObject.OneToOneConversationCharacter, _characterTemplate!, _battleEquipment!) && !too_many_companions();
 		}
 
 		private bool too_many_companions()
@@ -94,27 +114,39 @@ namespace RecruitEveryone.Behaviors
 			{
 				_characterTemplates = new Dictionary<int, CharacterObject>();
 			}
+			if (_wandererTemplates is null)
+            {
+                _wandererTemplates = new List<CharacterObject>(from x in CharacterObject.Templates where x.Occupation == Occupation.Wanderer select x);
+				WandererTemplates = new MBReadOnlyList<CharacterObject>(_wandererTemplates);
+			}
 			if (Hero.OneToOneConversationHero is null)
 			{
-				_wandererTemplates = new List<CharacterObject>(from x in CharacterObject.Templates where x.Occupation == Occupation.Wanderer && x.Culture == character.Culture select x);
 				if (!_characterTemplates.TryGetValue(_agent, out _wandererTemplate))
 				{
-					if (character.IsFemale)
-                    {
-						_wandererTemplate = _wandererTemplates.Where(character => character.IsFemale).GetRandomElementInefficiently();
-					}
-					else
-                    {
-						_wandererTemplate = _wandererTemplates.Where(character => !character.IsFemale).GetRandomElementInefficiently();
-					}
+					_wandererTemplate = WandererTemplates.GetRandomElement();
+
 					AddTemplate:
 					if (_wandererTemplate is not null)
 					{
-						_characterTemplates.Add(_agent, _wandererTemplate);
-						_characterTemplates.TryGetValue(_agent, out _wandererTemplate);
+						_characterTemplate = CharacterObject.CreateFrom(_wandererTemplate, false);
+						_characterTemplate.IsFemale = character.IsFemale;
+						_characterTemplate.Culture = character.Culture;
+						_characterTemplates.Add(_agent, _characterTemplate);
+						_characterTemplates.TryGetValue(_agent, out _characterTemplate);
+						List<CharacterObject> battleEquipmentTemplates = WandererTemplates.WhereQ((CharacterObject c) => c.Culture == character.Culture).ToListQ();
+						if (battleEquipmentTemplates is not null)
+						{
+							CharacterObject battleEquipmentTemplate = battleEquipmentTemplates.GetRandomElementInefficiently();
+							_battleEquipment = battleEquipmentTemplate.FirstBattleEquipment;
+						}
+						else
+						{
+							_battleEquipment = _wandererTemplate.FirstCivilianEquipment;
+						}
+						AdjustEquipmentImp(_battleEquipment);
 					}
 					else
-                    {
+					{
 						_wandererTemplate = character;
 						goto AddTemplate;
 					}
@@ -122,36 +154,35 @@ namespace RecruitEveryone.Behaviors
 			}
 			else
             {
-				_wandererTemplate = character;
-            }
+				_characterTemplate = character;
+				_wandererTemplate = WandererTemplates.GetRandomElement();
+				_battleEquipment = Hero.OneToOneConversationHero.BattleEquipment;
+			}
 
-			_battleEquipment = _wandererTemplate.FirstBattleEquipment;
-			AdjustEquipmentImp(_battleEquipment);
-
-			MBTextManager.SetTextVariable("GOLD_AMOUNT", RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(character, _wandererTemplate, _battleEquipment));
+			MBTextManager.SetTextVariable("GOLD_AMOUNT", RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(character, _characterTemplate!, _battleEquipment!));
 			MBTextManager.SetTextVariable("HIRING_COST_EXPLANATION", "{=7sAm6qwp}Very well. I'm going to need about {GOLD_AMOUNT}{GOLD_ICON} to settle up some debts, though. Can you pay?[rb:trivial]", false);
 
-			if (_wandererTemplate.GetTraitLevel(DefaultTraits.Mercy) + _wandererTemplate.GetTraitLevel(DefaultTraits.Honor) < 0 && _wandererTemplate.GetPersona() == DefaultTraits.PersonaIronic)
+			if (_characterTemplate!.GetTraitLevel(DefaultTraits.Mercy) + _characterTemplate.GetTraitLevel(DefaultTraits.Honor) < 0 && _characterTemplate.GetPersona() == DefaultTraits.PersonaIronic)
 			{
 				MBTextManager.SetTextVariable("HIRING_COST_EXPLANATION", "{=8Mx8gMmw}One other small thing... I've had to take some money from some fairly dangerous people around here. I'll need {GOLD_AMOUNT}{GOLD_ICON} to get that beast off my back. Do you reckon you can pay me that?[rb:trivial]", false);
 			}
-			else if (_wandererTemplate.GetTraitLevel(DefaultTraits.Mercy) + _wandererTemplate.GetTraitLevel(DefaultTraits.Generosity) > 0 && _wandererTemplate.GetTraitLevel(DefaultTraits.Honor) < 0 && !character.IsFemale)
+			else if (_characterTemplate.GetTraitLevel(DefaultTraits.Mercy) + _characterTemplate.GetTraitLevel(DefaultTraits.Generosity) > 0 && _characterTemplate.GetTraitLevel(DefaultTraits.Honor) < 0 && !character.IsFemale)
 			{
 				MBTextManager.SetTextVariable("HIRING_COST_EXPLANATION", "{=K1RtrtvH}So, uh, there's a young woman around here. I really need to leave her some money before I go anywhere. Let's say {GOLD_AMOUNT}{GOLD_ICON} - can you pay me that?[rb:trivial]", false);
 			}
-			else if (_wandererTemplate.GetPersona() == DefaultTraits.PersonaCurt && _wandererTemplate.GetTraitLevel(DefaultTraits.Mercy) < 0)
+			else if (_characterTemplate.GetPersona() == DefaultTraits.PersonaCurt && _characterTemplate.GetTraitLevel(DefaultTraits.Mercy) < 0)
 			{
 				MBTextManager.SetTextVariable("HIRING_COST_EXPLANATION", "{=PlhbjNOE}Just so you know... I'm not cheap. I want {GOLD_AMOUNT}{GOLD_ICON} as an advance, or there's no deal.[rb:trivial]", false);
 			}
-			else if (_wandererTemplate.GetPersona() == DefaultTraits.PersonaCurt)
+			else if (_characterTemplate.GetPersona() == DefaultTraits.PersonaCurt)
 			{
 				MBTextManager.SetTextVariable("HIRING_COST_EXPLANATION", "{=9kHU4AMD}Great. Going to need some money in advance though - {GOLD_AMOUNT}{GOLD_ICON}. Can you pay?[rb:trivial]", false);
 			}
-			else if (_wandererTemplate.GetTraitLevel(DefaultTraits.Honor) < 0)
+			else if (_characterTemplate.GetTraitLevel(DefaultTraits.Honor) < 0)
 			{
 				MBTextManager.SetTextVariable("HIRING_COST_EXPLANATION", "{=loLetAI9}Very well. But the world being as it is, I'm going to need {GOLD_AMOUNT}{GOLD_ICON} as a down payment on my services. Can you pay that?[rb:trivial]", false);
 			}
-			else if (_wandererTemplate.GetTraitLevel(DefaultTraits.Mercy) > 0 || _wandererTemplate.GetTraitLevel(DefaultTraits.Generosity) > 0)
+			else if (_characterTemplate.GetTraitLevel(DefaultTraits.Mercy) > 0 || _characterTemplate.GetTraitLevel(DefaultTraits.Generosity) > 0)
 			{
 				MBTextManager.SetTextVariable("HIRING_COST_EXPLANATION", "{=9g6FB5Y7}There are some townspeople who've looked after me here, made sure I was fed and that. I'd like to give them something before I go. Could I ask for {GOLD_AMOUNT}{GOLD_ICON} as an advance?[rb:trivial]", false);
 			}
@@ -211,20 +242,14 @@ namespace RecruitEveryone.Behaviors
 			Hero hero;
 			if (Hero.OneToOneConversationHero is null)
 			{
+				Agent agent = (Agent)Campaign.Current.ConversationManager.OneToOneConversationAgent;
 				if (_recruitedAgents is null)
 				{
 					_recruitedAgents = new List<int>();
 				}
 				_recruitedAgents.Add(_agent);
-				Agent agent = (Agent)Campaign.Current.ConversationManager.OneToOneConversationAgent;
 				int age = MBMath.ClampInt((int)agent.Age, Campaign.Current.Models.AgeModel.HeroComesOfAge, REAgeModel.MaxAge);
-				hero = HeroCreator.CreateSpecialHero(_wandererTemplate, Settlement.CurrentSettlement, null, null, age);
-				foreach (TraitObject trait in DefaultTraits.All)
-				{
-					int traitLevel = _wandererTemplate!.GetTraitLevel(trait);
-					hero.SetTraitLevel(trait, traitLevel);
-				}
-				Campaign.Current.GetCampaignBehavior<IHeroCreationCampaignBehavior>().DeriveSkillsFromTraits(hero, _wandererTemplate);
+				hero = HeroCreator.CreateSpecialHero(_characterTemplate, Settlement.CurrentSettlement, null, null, age);
 				
 				// In NameGenerator
 				TextObject textObject = new TextObject("{=nameoccupation}{FIRST_NAME}{OCCUPATION}");
@@ -233,6 +258,7 @@ namespace RecruitEveryone.Behaviors
 				hero.CharacterObject.Name = textObject;
 
 				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(hero, agent.BodyPropertiesValue.StaticProperties);
+				AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(hero, _battleEquipment);
 				AccessTools.Property(typeof(Hero), "CivilianEquipment").SetValue(hero, agent.SpawnEquipment);
 
 				if (CampaignMission.Current.Location is not null)
@@ -249,7 +275,21 @@ namespace RecruitEveryone.Behaviors
 			else
 			{
 				hero = Hero.OneToOneConversationHero;
+				_characterTemplate = CharacterObject.CreateFrom(_characterTemplate, false);
+				StaticBodyProperties staticBodyProperties = (StaticBodyProperties)AccessTools.Property(typeof(Hero), "StaticBodyProperties").GetValue(hero);
+				RemoveNotable(hero);
+				AccessTools.Property(typeof(CharacterObject), "Occupation").SetValue(_characterTemplate, Occupation.Wanderer);
+				AccessTools.Property(typeof(Hero), "CharacterObject").SetValue(hero, _characterTemplate);
+				AccessTools.Property(typeof(CharacterObject), "HeroObject").SetValue(_characterTemplate, hero);;
+				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(_characterTemplate.HeroObject, staticBodyProperties);
 			}
+
+			foreach (TraitObject trait in DefaultTraits.All)
+			{
+				int traitLevel = _wandererTemplate!.GetTraitLevel(trait);
+				hero.SetTraitLevel(trait, traitLevel);
+			}
+			Campaign.Current.GetCampaignBehavior<IHeroCreationCampaignBehavior>().DeriveSkillsFromTraits(hero, _characterTemplate);
 
 			if (hero.CharacterObject.Occupation != Occupation.Wanderer)
 			{
@@ -268,6 +308,7 @@ namespace RecruitEveryone.Behaviors
 					DisbandPartyAction.ApplyDisband(mobileParty);
 				}
 			}
+			Don't think it's needed anymore due to how disbands work now... At least I think so.
 			*/
 
 			foreach (CaravanPartyComponent caravanParty in hero.OwnedCaravans.ToList())
@@ -284,13 +325,13 @@ namespace RecruitEveryone.Behaviors
 			{
 				hero.Issue.CompleteIssueWithCancel();
 			}
-			GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, hero, RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(CharacterObject.OneToOneConversationCharacter, _wandererTemplate!, _battleEquipment!), false);
+			GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, hero, RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(CharacterObject.OneToOneConversationCharacter, _characterTemplate!, _battleEquipment!), false);
 			AddCompanionAction.Apply(Clan.PlayerClan, hero);
 			AddHeroToPartyAction.Apply(hero, MobileParty.MainParty, true);
 			CampaignEventDispatcher.Instance.OnHeroCreated(hero, false);
 		}
 
-		private static TextObject FormerOccupation()
+		private TextObject FormerOccupation()
         {
             TextObject textObject;
             switch (CharacterObject.OneToOneConversationCharacter.Occupation)
@@ -353,17 +394,17 @@ namespace RecruitEveryone.Behaviors
 			return textObject;
         }
 
-		private static bool IsConversationAgentBeggar()
+		private bool IsConversationAgentBeggar()
 		{
 			return Settlement.CurrentSettlement.Culture.Beggar == CharacterObject.OneToOneConversationCharacter || Settlement.CurrentSettlement.Culture.FemaleBeggar == CharacterObject.OneToOneConversationCharacter;
 		}
 
-		private static bool IsConversationAgentDancer()
+		private bool IsConversationAgentDancer()
 		{
 			return Settlement.CurrentSettlement.Culture.FemaleDancer == CharacterObject.OneToOneConversationCharacter;
 		}
 
-		private static bool IsConversationAgentBarber()
+		private bool IsConversationAgentBarber()
 		{
 			return Settlement.CurrentSettlement.Culture.Barber == CharacterObject.OneToOneConversationCharacter;
 		}
