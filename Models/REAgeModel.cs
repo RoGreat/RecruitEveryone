@@ -1,26 +1,11 @@
 ﻿using TaleWorlds.Core;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.Library;
 
 namespace RecruitEveryone.Models
 {
     internal class REAgeModel
     {
-        private static readonly int _ofAge = Campaign.Current.Models.AgeModel.HeroComesOfAge;
-
-        private static readonly int _oldAge = Campaign.Current.Models.AgeModel.BecomeOldAge;
-
-        private static readonly int _maxAge = Campaign.Current.Models.AgeModel.MaxAge;
-
-        public static int configMaxAge { get; set; } = 80;
-
-        public static int MaxAge
-        {
-            get
-            {
-                return MBMath.ClampInt(configMaxAge, _oldAge, _maxAge);
-            }
-        }
+        public static readonly int MaxAge = 80;
 
         public static int YoungRandAge
         {
@@ -53,5 +38,9 @@ namespace RecruitEveryone.Models
                 return MBRandom.RandomInt(YoungRandAge, OldRandAge);
             }
         }
+
+        private static readonly int _ofAge = Campaign.Current.Models.AgeModel.HeroComesOfAge;
+
+        private static readonly int _oldAge = Campaign.Current.Models.AgeModel.BecomeOldAge;
     }
 }

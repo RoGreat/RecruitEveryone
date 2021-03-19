@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using HarmonyLib;
 using MountAndBlade.CampaignBehaviors;
@@ -20,19 +21,15 @@ namespace RecruitEveryone.Behaviors
 	{
 		public MBReadOnlyList<CharacterObject>? WandererTemplates { get; private set; }
 
-		private Dictionary<int, CharacterObject>? _characterTemplates;
-
-		private List<CharacterObject>? _wandererTemplates;
-
-		private CharacterObject? _wandererTemplate;
-
-		private CharacterObject? _characterTemplate;
-
-		private List<int>? _recruitedAgents;
-
-		private int _agent;
-
-		private Equipment? _battleEquipment;
+		// Problem is that it does not permanently change the occupation
+		// I believe it is tied to the _originCharacter field (template)
+		private void OccupationToWanderer(CharacterObject character)
+		{
+			if (character.Occupation != Occupation.Wanderer)
+			{
+				AccessTools.Property(typeof(CharacterObject), "Occupation").SetValue(character, Occupation.Wanderer);
+			}
+		}
 
 		private void RemoveNotable(Hero hero)
         {
@@ -43,7 +40,7 @@ namespace RecruitEveryone.Behaviors
 
 		protected void AddDialogs(CampaignGameStarter starter)
 		{
-			foreach (Hero hero in Hero.All)
+			foreach (Hero hero in Hero.All.ToListQ())
 			{
 				if (hero.IsPlayerCompanion)
 				{
@@ -51,10 +48,7 @@ namespace RecruitEveryone.Behaviors
 					{
 						RemoveNotable(hero);
 					}
-					if (hero.CharacterObject.Occupation != Occupation.Wanderer)
-					{
-						AccessTools.Property(typeof(CharacterObject), "Occupation").SetValue(hero.CharacterObject, Occupation.Wanderer);
-					}
+					OccupationToWanderer(hero.CharacterObject);
 				}
 			}
 
@@ -96,10 +90,10 @@ namespace RecruitEveryone.Behaviors
 
 		private bool conversation_companion_hire_on_condition()
 		{
-			GameTexts.SetVariable("STR1", RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(CharacterObject.OneToOneConversationCharacter, _characterTemplate!, _battleEquipment!));
+			GameTexts.SetVariable("STR1", _hiringPrice);
 			GameTexts.SetVariable("STR2", "{=!}<img src=\"Icons\\Coin@2x\">");
 			MBTextManager.SetTextVariable("GOLD_AMOUNT", GameTexts.FindText("str_STR1_STR2", null), false);
-			return Hero.MainHero.Gold > RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(CharacterObject.OneToOneConversationCharacter, _characterTemplate!, _battleEquipment!) && !too_many_companions();
+			return Hero.MainHero.Gold > _hiringPrice && !too_many_companions();
 		}
 
 		private bool too_many_companions()
@@ -125,7 +119,7 @@ namespace RecruitEveryone.Behaviors
 				{
 					_wandererTemplate = WandererTemplates.GetRandomElement();
 
-					AddTemplate:
+				AddTemplate:
 					if (_wandererTemplate is not null)
 					{
 						_characterTemplate = CharacterObject.CreateFrom(_wandererTemplate, false);
@@ -133,17 +127,16 @@ namespace RecruitEveryone.Behaviors
 						_characterTemplate.Culture = character.Culture;
 						_characterTemplates.Add(_agent, _characterTemplate);
 						_characterTemplates.TryGetValue(_agent, out _characterTemplate);
-						List<CharacterObject> battleEquipmentTemplates = WandererTemplates.WhereQ((CharacterObject c) => c.Culture == character.Culture).ToListQ();
-						if (battleEquipmentTemplates is not null)
+						List<CharacterObject> battleEquipmentTemplates = WandererTemplates.WhereQ((CharacterObject c) => c.Culture == Settlement.CurrentSettlement.Culture).ToListQ();
+						if (battleEquipmentTemplates is not null || !battleEquipmentTemplates.IsEmpty())
 						{
 							CharacterObject battleEquipmentTemplate = battleEquipmentTemplates.GetRandomElementInefficiently();
-							_battleEquipment = battleEquipmentTemplate.FirstBattleEquipment;
+							_battleEquipment = battleEquipmentTemplate.RandomBattleEquipment;
 						}
 						else
 						{
 							_battleEquipment = _wandererTemplate.FirstCivilianEquipment;
 						}
-						AdjustEquipmentImp(_battleEquipment);
 					}
 					else
 					{
@@ -156,10 +149,12 @@ namespace RecruitEveryone.Behaviors
             {
 				_characterTemplate = character;
 				_wandererTemplate = WandererTemplates.GetRandomElement();
-				_battleEquipment = Hero.OneToOneConversationHero.BattleEquipment;
+				_battleEquipment = Hero.OneToOneConversationHero.CivilianEquipment;
 			}
+			AdjustEquipmentImp(_battleEquipment!);
+			_hiringPrice = RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(character, _characterTemplate!, _battleEquipment!);
 
-			MBTextManager.SetTextVariable("GOLD_AMOUNT", RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(character, _characterTemplate!, _battleEquipment!));
+			MBTextManager.SetTextVariable("GOLD_AMOUNT", _hiringPrice);
 			MBTextManager.SetTextVariable("HIRING_COST_EXPLANATION", "{=7sAm6qwp}Very well. I'm going to need about {GOLD_AMOUNT}{GOLD_ICON} to settle up some debts, though. Can you pay?[rb:trivial]", false);
 
 			if (_characterTemplate!.GetTraitLevel(DefaultTraits.Mercy) + _characterTemplate.GetTraitLevel(DefaultTraits.Honor) < 0 && _characterTemplate.GetPersona() == DefaultTraits.PersonaIronic)
@@ -249,10 +244,11 @@ namespace RecruitEveryone.Behaviors
 				}
 				_recruitedAgents.Add(_agent);
 				int age = MBMath.ClampInt((int)agent.Age, Campaign.Current.Models.AgeModel.HeroComesOfAge, REAgeModel.MaxAge);
+
 				hero = HeroCreator.CreateSpecialHero(_characterTemplate, Settlement.CurrentSettlement, null, null, age);
-				
+
 				// In NameGenerator
-				TextObject textObject = new TextObject("{=nameoccupation}{FIRST_NAME}{OCCUPATION}");
+				TextObject textObject = new("{=nameoccupation}{FIRST_NAME}{OCCUPATION}");
 				textObject.SetTextVariable("FIRST_NAME", hero.FirstName);
 				textObject.SetTextVariable("OCCUPATION", FormerOccupation());
 				hero.CharacterObject.Name = textObject;
@@ -275,14 +271,24 @@ namespace RecruitEveryone.Behaviors
 			else
 			{
 				hero = Hero.OneToOneConversationHero;
-				_characterTemplate = CharacterObject.CreateFrom(_characterTemplate, false);
+				CharacterObject character = hero.CharacterObject;
+				_characterTemplate = CharacterObject.CreateFrom(_wandererTemplate, false);
+				_characterTemplate.IsFemale = character.IsFemale;
+				_characterTemplate.Culture = character.Culture;
+				_characterTemplate.Name = hero.Name;
+
 				StaticBodyProperties staticBodyProperties = (StaticBodyProperties)AccessTools.Property(typeof(Hero), "StaticBodyProperties").GetValue(hero);
-				RemoveNotable(hero);
-				AccessTools.Property(typeof(CharacterObject), "Occupation").SetValue(_characterTemplate, Occupation.Wanderer);
 				AccessTools.Property(typeof(Hero), "CharacterObject").SetValue(hero, _characterTemplate);
-				AccessTools.Property(typeof(CharacterObject), "HeroObject").SetValue(_characterTemplate, hero);;
+
+				AccessTools.Property(typeof(CharacterObject), "HeroObject").SetValue(_characterTemplate, hero);
 				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(_characterTemplate.HeroObject, staticBodyProperties);
+				AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(_characterTemplate.HeroObject, _battleEquipment);
+				AccessTools.Property(typeof(Hero), "CivilianEquipment").SetValue(_characterTemplate.HeroObject, _battleEquipment);
+
+				RemoveNotable(hero);
 			}
+
+			OccupationToWanderer(hero.CharacterObject);
 
 			foreach (TraitObject trait in DefaultTraits.All)
 			{
@@ -291,27 +297,7 @@ namespace RecruitEveryone.Behaviors
 			}
 			Campaign.Current.GetCampaignBehavior<IHeroCreationCampaignBehavior>().DeriveSkillsFromTraits(hero, _characterTemplate);
 
-			if (hero.CharacterObject.Occupation != Occupation.Wanderer)
-			{
-				AccessTools.Property(typeof(CharacterObject), "Occupation").SetValue(hero.CharacterObject, Occupation.Wanderer);
-			}
-
-			// Notable fixes for the most part
-			// OwnedParties does not exist in e1.5.8, a shame too
-			/*
-			foreach (PartyBase party in hero.OwnedParties.ToList())
-			{
-				MobileParty mobileParty = party.MobileParty;
-				if (mobileParty is not null)
-				{
-					mobileParty.CurrentSettlement = mobileParty.HomeSettlement;
-					DisbandPartyAction.ApplyDisband(mobileParty);
-				}
-			}
-			Don't think it's needed anymore due to how disbands work now... At least I think so.
-			*/
-
-			foreach (CaravanPartyComponent caravanParty in hero.OwnedCaravans.ToList())
+			foreach (CaravanPartyComponent caravanParty in hero.OwnedCaravans.ToListQ())
 			{
 				MobileParty mobileParty = caravanParty.MobileParty;
 				if (mobileParty is not null)
@@ -325,7 +311,7 @@ namespace RecruitEveryone.Behaviors
 			{
 				hero.Issue.CompleteIssueWithCancel();
 			}
-			GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, hero, RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(CharacterObject.OneToOneConversationCharacter, _characterTemplate!, _battleEquipment!), false);
+			GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, hero, _hiringPrice, false);
 			AddCompanionAction.Apply(Clan.PlayerClan, hero);
 			AddHeroToPartyAction.Apply(hero, MobileParty.MainParty, true);
 			CampaignEventDispatcher.Instance.OnHeroCreated(hero, false);
@@ -421,5 +407,21 @@ namespace RecruitEveryone.Behaviors
 		public override void SyncData(IDataStore dataStore)
 		{
 		}
+
+		private Dictionary<int, CharacterObject>? _characterTemplates;
+
+		private List<CharacterObject>? _wandererTemplates;
+
+		private CharacterObject? _wandererTemplate;
+
+		private CharacterObject? _characterTemplate;
+
+		private List<int>? _recruitedAgents;
+
+		private int _agent;
+
+		private int _hiringPrice;
+
+		private Equipment? _battleEquipment;
 	}
 }

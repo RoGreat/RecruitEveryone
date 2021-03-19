@@ -9,7 +9,7 @@ namespace RecruitEveryone.Models
 
         public static int GetCompanionHiringPrice(CharacterObject character, CharacterObject templateCharacter, Equipment battleEquipment)
         {
-            ExplainedNumber explainedNumber = new ExplainedNumber(0f, false, null);
+            ExplainedNumber explainedNumber = new(0f, false, null);
             Settlement currentSettlement = Hero.MainHero.CurrentSettlement;
             Town? town = currentSettlement?.Town;
             if (town is null)
