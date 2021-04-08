@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using HarmonyLib;
+using Helpers;
 using MountAndBlade.CampaignBehaviors;
 using RecruitEveryone.Models;
 using TaleWorlds.CampaignSystem;
@@ -44,6 +45,10 @@ namespace RecruitEveryone.Behaviors
 			{
 				if (hero.IsPlayerCompanion)
 				{
+					// In case the equipment bug is still on the save
+					_battleEquipment = hero.BattleEquipment.Clone(false);
+					AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(hero, _battleEquipment);
+					AdjustEquipmentImp(hero.BattleEquipment);
 					if (hero.IsNotable)
 					{
 						RemoveNotable(hero);
@@ -127,15 +132,19 @@ namespace RecruitEveryone.Behaviors
 						_characterTemplate.Culture = character.Culture;
 						_characterTemplates.Add(_agent, _characterTemplate);
 						_characterTemplates.TryGetValue(_agent, out _characterTemplate);
-						List<CharacterObject> battleEquipmentTemplates = WandererTemplates.WhereQ((CharacterObject c) => c.Culture == Settlement.CurrentSettlement.Culture).ToListQ();
+						List<CharacterObject> battleEquipmentTemplates = WandererTemplates.WhereQ((CharacterObject c) => c.Culture == Settlement.CurrentSettlement.Culture && c.IsFemale  == character.IsFemale).ToListQ();
 						if (battleEquipmentTemplates is not null || !battleEquipmentTemplates.IsEmpty())
 						{
+
+
 							CharacterObject battleEquipmentTemplate = battleEquipmentTemplates.GetRandomElementInefficiently();
-							_battleEquipment = battleEquipmentTemplate.RandomBattleEquipment;
+							// You have to clone them since they are all tied to the same equipment set otherwise
+							// Learned from DeliverOffspring function
+							_battleEquipment = battleEquipmentTemplate.RandomBattleEquipment.Clone(false);
 						}
 						else
 						{
-							_battleEquipment = _wandererTemplate.FirstCivilianEquipment;
+							_battleEquipment = _wandererTemplate.FirstCivilianEquipment.Clone(false);
 						}
 					}
 					else
@@ -192,19 +201,19 @@ namespace RecruitEveryone.Behaviors
 			for (EquipmentIndex equipmentIndex = EquipmentIndex.WeaponItemBeginSlot; equipmentIndex < EquipmentIndex.NumEquipmentSetSlots; equipmentIndex++)
 			{
 				EquipmentElement equipmentElement = equipment[equipmentIndex];
-				if (equipmentElement.Item is not null)
+				if (equipmentElement.Item != null)
 				{
-					if (equipmentElement.Item.ArmorComponent is not null)
+					if (equipmentElement.Item.ArmorComponent != null)
 					{
 						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, @object);
 					}
-					else if (equipmentElement.Item.WeaponComponent is not null)
-					{
-						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, object2);
-					}
-					else if (equipmentElement.Item.HorseComponent is not null)
+					else if (equipmentElement.Item.HorseComponent != null)
 					{
 						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, object3);
+					}
+					else if (equipmentElement.Item.WeaponComponent != null)
+					{
+						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, object2);
 					}
 				}
 			}
@@ -312,6 +321,9 @@ namespace RecruitEveryone.Behaviors
 				hero.Issue.CompleteIssueWithCancel();
 			}
 			GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, hero, _hiringPrice, false);
+
+			AdjustEquipmentImp(hero.BattleEquipment);
+
 			AddCompanionAction.Apply(Clan.PlayerClan, hero);
 			AddHeroToPartyAction.Apply(hero, MobileParty.MainParty, true);
 			CampaignEventDispatcher.Instance.OnHeroCreated(hero, false);
