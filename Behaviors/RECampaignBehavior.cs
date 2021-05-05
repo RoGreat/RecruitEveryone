@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using HarmonyLib;
 using Helpers;
@@ -49,15 +48,13 @@ namespace RecruitEveryone.Behaviors
 						RemoveNotable(hero);
 					}
 					OccupationToWanderer(hero.CharacterObject);
+
+					// Fix shared equipment bug
+					Equipment battleEquipment = hero.BattleEquipment.Clone();
+					Equipment civilianEquipment = hero.CivilianEquipment.Clone();
+					EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, battleEquipment);
+					EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, civilianEquipment);
 				}
-			}
-			foreach (Hero hero in Hero.MainHero.CompanionsInParty.ToListQ())
-			{
-				// Fix tied equipment bug
-				Equipment battleEquipment = hero.BattleEquipment.Clone();
-				Equipment civilianEquipment = hero.CivilianEquipment.Clone();
-				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, battleEquipment);
-				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, civilianEquipment);
 			}
 
 			starter.AddDialogLine("wanderer_skip_intro", "wanderer_preintroduction", "hero_main_options", "{=LUiQ6bpo}Very well, then. What is it?", new ConversationSentence.OnConditionDelegate(conversation_wanderer_skip_preintroduction_on_condition), null, 200, null);
@@ -128,7 +125,7 @@ namespace RecruitEveryone.Behaviors
 			}
 			if (Hero.OneToOneConversationHero is null)
 			{
-				if (!_characterTemplates.TryGetValue(_agent, out _wandererTemplate))
+				if (!_characterTemplates.TryGetValue(_agentKey, out _wandererTemplate))
 				{
 					_wandererTemplate = WandererTemplates.GetRandomElement();
 
@@ -138,23 +135,19 @@ namespace RecruitEveryone.Behaviors
 						_characterTemplate = CharacterObject.CreateFrom(_wandererTemplate, false);
 						_characterTemplate.IsFemale = character.IsFemale;
 						_characterTemplate.Culture = character.Culture;
-						_characterTemplates.Add(_agent, _characterTemplate);
-						// To hopefully curtail custom culture crashes
-						if (character.Culture == Settlement.CurrentSettlement.Culture)
+						_characterTemplates.Add(_agentKey, _characterTemplate);
+						CharacterObject randomBattleEquipment = WandererTemplates.GetRandomElementWithPredicate((CharacterObject c) => c.Culture == Settlement.CurrentSettlement.Culture && c.IsFemale == character.IsFemale);
+						// Avoid custom culture crashes
+						if (randomBattleEquipment is null)
 						{
-							List<CharacterObject>  battleEquipmentTemplates = WandererTemplates.WhereQ((CharacterObject c) => c.Culture == Settlement.CurrentSettlement.Culture && c.IsFemale == character.IsFemale).ToListQ();
-							CharacterObject battleEquipmentTemplate = battleEquipmentTemplates.GetRandomElementInefficiently();
-							_battleEquipment = battleEquipmentTemplate.RandomBattleEquipment.Clone();
+							_battleEquipment = new Equipment(false);
+							_battleEquipment.FillFrom(character.RandomCivilianEquipment, false);
 						}
 						else
-						{
-							List<CharacterObject> battleEquipmentTemplates = WandererTemplates.WhereQ((CharacterObject c) => c.IsFemale == character.IsFemale).ToListQ();
-							CharacterObject battleEquipmentTemplate = battleEquipmentTemplates.GetRandomElementInefficiently();
-							_battleEquipment = _wandererTemplate.RandomBattleEquipment.Clone();
+                        {
+							_battleEquipment = randomBattleEquipment.RandomBattleEquipment.Clone();
 						}
-						// Going by the dictionary system instead of doing the wanderer equipment system...
-						// Does increase the cost though.
-						_battleEquipments.Add(_agent, _battleEquipment);
+						_battleEquipments.Add(_agentKey, _battleEquipment);
 					}
 					else
 					{
@@ -162,15 +155,20 @@ namespace RecruitEveryone.Behaviors
 						goto AddTemplate;
 					}
 				}
-				_battleEquipments.TryGetValue(_agent, out _battleEquipment);
+				_agent = (Agent)Campaign.Current.ConversationManager.OneToOneConversationAgent;
+				_battleEquipments.TryGetValue(_agentKey, out _battleEquipment);
+				_civilianEquipment = _agent.SpawnEquipment.Clone();
+				AdjustEquipmentImp(_battleEquipment);
+				AdjustEquipmentImp(_civilianEquipment);
 			}
 			else
             {
 				_characterTemplate = character;
 				_wandererTemplate = WandererTemplates.GetRandomElement();
 				_battleEquipment = Hero.OneToOneConversationHero.BattleEquipment.Clone();
+				_civilianEquipment = Hero.OneToOneConversationHero.CivilianEquipment.Clone();
 			}
-			_hiringPrice = RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(character, _characterTemplate!, _battleEquipment!);
+			_hiringPrice = RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(_characterTemplate!, _battleEquipment!, _civilianEquipment!);
 
 			MBTextManager.SetTextVariable("GOLD_AMOUNT", _hiringPrice);
 			MBTextManager.SetTextVariable("HIRING_COST_EXPLANATION", "{=7sAm6qwp}Very well. I'm going to need about {GOLD_AMOUNT}{GOLD_ICON} to settle up some debts, though. Can you pay?[rb:trivial]", false);
@@ -210,12 +208,12 @@ namespace RecruitEveryone.Behaviors
             }
 			if (Hero.OneToOneConversationHero is null)
 			{
-				_agent = Math.Abs(Campaign.Current.ConversationManager.OneToOneConversationAgent.GetHashCode());
+				_agentKey = Math.Abs(Campaign.Current.ConversationManager.OneToOneConversationAgent.GetHashCode());
 				if (_recruitedAgents is null)
 				{
 					_recruitedAgents = new List<int>();
 				}
-				if (_recruitedAgents.Contains(_agent))
+				if (_recruitedAgents.Contains(_agentKey))
 				{
 					return false;
 				}
@@ -229,14 +227,12 @@ namespace RecruitEveryone.Behaviors
 			Hero hero;
 			if (Hero.OneToOneConversationHero is null)
 			{
-				Agent agent = (Agent)Campaign.Current.ConversationManager.OneToOneConversationAgent;
 				if (_recruitedAgents is null)
 				{
 					_recruitedAgents = new List<int>();
 				}
-				_recruitedAgents.Add(_agent);
-				int age = MBMath.ClampInt((int)agent.Age, Campaign.Current.Models.AgeModel.HeroComesOfAge, REAgeModel.MaxAge);
-
+				_recruitedAgents.Add(_agentKey);
+				int age = MBMath.ClampInt((int)_agent!.Age, Campaign.Current.Models.AgeModel.HeroComesOfAge, REAgeModel.MaxAge);
 				hero = HeroCreator.CreateSpecialHero(_characterTemplate, Settlement.CurrentSettlement, null, null, age);
 
 				// In NameGenerator
@@ -244,18 +240,16 @@ namespace RecruitEveryone.Behaviors
 				textObject.SetTextVariable("FIRST_NAME", hero.FirstName);
 				textObject.SetTextVariable("OCCUPATION", FormerOccupation());
 				hero.CharacterObject.Name = textObject;
-
-				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(hero, agent.BodyPropertiesValue.StaticProperties);
-
-				Equipment civilianEquipment = agent.SpawnEquipment.Clone();
-				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, civilianEquipment);
+				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(hero, _agent.BodyPropertiesValue.StaticProperties);
+				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, _civilianEquipment);
+				Campaign.Current.GetCampaignBehavior<IHeroCreationCampaignBehavior>().DeriveSkillsFromTraits(hero, _characterTemplate);
 
 				if (CampaignMission.Current.Location is not null)
 				{
 					if (CampaignMission.Current.Location.StringId == "tavern")
 					{
 						Location location = CampaignMission.Current.Location;
-						location.RemoveLocationCharacter(location.GetLocationCharacter(agent.Origin));
+						location.RemoveLocationCharacter(location.GetLocationCharacter(_agent.Origin));
 					}
 				}
 				hero.HasMet = true;
@@ -264,37 +258,34 @@ namespace RecruitEveryone.Behaviors
 			else
 			{
 				hero = Hero.OneToOneConversationHero;
+				// Need to take the preexisting body, traits, perks, and skills
+				StaticBodyProperties staticBodyProperties = (StaticBodyProperties)AccessTools.Property(typeof(Hero), "StaticBodyProperties").GetValue(hero);
+				CharacterTraits heroTraits = (CharacterTraits)AccessTools.Field(typeof(Hero), "_heroTraits").GetValue(hero);
+				CharacterPerks heroPerks = (CharacterPerks)AccessTools.Field(typeof(Hero), "_heroPerks").GetValue(hero);
+				CharacterSkills heroSkills = (CharacterSkills)AccessTools.Field(typeof(Hero), "_heroSkills").GetValue(hero);
+
 				CharacterObject character = hero.CharacterObject;
 				_characterTemplate = CharacterObject.CreateFrom(_wandererTemplate, false);
-
-				Equipment civilianEquipment = hero.CivilianEquipment.Clone();
-
 				_characterTemplate.IsFemale = character.IsFemale;
 				_characterTemplate.Culture = character.Culture;
 				_characterTemplate.Name = hero.Name;
 
-				StaticBodyProperties staticBodyProperties = (StaticBodyProperties)AccessTools.Property(typeof(Hero), "StaticBodyProperties").GetValue(hero);
-				AccessTools.Property(typeof(Hero), "CharacterObject").SetValue(hero, _characterTemplate);
-
 				AccessTools.Property(typeof(CharacterObject), "HeroObject").SetValue(_characterTemplate, hero);
 				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(_characterTemplate.HeroObject, staticBodyProperties);
+				AccessTools.Field(typeof(Hero), "_heroTraits").SetValue(_characterTemplate.HeroObject, heroTraits);
+				AccessTools.Field(typeof(Hero), "_heroPerks").SetValue(_characterTemplate.HeroObject, heroPerks);
+				AccessTools.Field(typeof(Hero), "_heroSkills").SetValue(_characterTemplate.HeroObject, heroSkills);
+				AccessTools.Property(typeof(Hero), "CharacterObject").SetValue(hero, _characterTemplate);
 
-				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, civilianEquipment);
+				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, _civilianEquipment);
 
-				RemoveNotable(hero);
+				if (hero.IsNotable)
+				{
+					RemoveNotable(hero);
+				}
 			}
-
 			EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, _battleEquipment);
-
 			OccupationToWanderer(hero.CharacterObject);
-
-			foreach (TraitObject trait in DefaultTraits.All)
-			{
-				int traitLevel = _wandererTemplate!.GetTraitLevel(trait);
-				hero.SetTraitLevel(trait, traitLevel);
-			}
-			Campaign.Current.GetCampaignBehavior<IHeroCreationCampaignBehavior>().DeriveSkillsFromTraits(hero, _characterTemplate);
-
 			foreach (CaravanPartyComponent caravanParty in hero.OwnedCaravans.ToListQ())
 			{
 				MobileParty mobileParty = caravanParty.MobileParty;
@@ -311,6 +302,32 @@ namespace RecruitEveryone.Behaviors
 			AddCompanionAction.Apply(Clan.PlayerClan, hero);
 			AddHeroToPartyAction.Apply(hero, MobileParty.MainParty, true);
 			CampaignEventDispatcher.Instance.OnHeroCreated(hero, false);
+		}
+
+		private void AdjustEquipmentImp(Equipment equipment)
+		{
+			ItemModifier @object = MBObjectManager.Instance.GetObject<ItemModifier>("companion_armor");
+			ItemModifier object2 = MBObjectManager.Instance.GetObject<ItemModifier>("companion_weapon");
+			ItemModifier object3 = MBObjectManager.Instance.GetObject<ItemModifier>("companion_horse");
+			for (EquipmentIndex equipmentIndex = EquipmentIndex.WeaponItemBeginSlot; equipmentIndex < EquipmentIndex.NumEquipmentSetSlots; equipmentIndex++)
+			{
+				EquipmentElement equipmentElement = equipment[equipmentIndex];
+				if (equipmentElement.Item != null)
+				{
+					if (equipmentElement.Item.ArmorComponent != null)
+					{
+						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, @object);
+					}
+					else if (equipmentElement.Item.WeaponComponent != null)
+					{
+						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, object2);
+					}
+					else if (equipmentElement.Item.HorseComponent != null)
+					{
+						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, object3);
+					}
+				}
+			}
 		}
 
 		private TextObject FormerOccupation()
@@ -414,9 +431,13 @@ namespace RecruitEveryone.Behaviors
 
 		private Equipment? _battleEquipment;
 
+		private Equipment? _civilianEquipment;
+
 		private List<int>? _recruitedAgents;
 
-		private int _agent;
+		private int _agentKey;
+
+		private Agent? _agent;
 
 		private int _hiringPrice;
 	}

@@ -7,7 +7,7 @@ namespace RecruitEveryone.Models
     internal class RECompanionHiringPriceCalculationModel
     {
 
-        public static int GetCompanionHiringPrice(CharacterObject character, CharacterObject templateCharacter, Equipment battleEquipment)
+        public static int GetCompanionHiringPrice(CharacterObject templateCharacter, Equipment battleEquipment, Equipment civilianEquipment)
         {
             ExplainedNumber explainedNumber = new(0f, false, null);
             Settlement currentSettlement = Hero.MainHero.CurrentSettlement;
@@ -27,7 +27,7 @@ namespace RecruitEveryone.Models
             }
             for (EquipmentIndex equipmentIndex2 = EquipmentIndex.WeaponItemBeginSlot; equipmentIndex2 < EquipmentIndex.NumEquipmentSetSlots; equipmentIndex2++)
             {
-                EquipmentElement itemRosterElement2 = character.FirstCivilianEquipment[equipmentIndex2];
+                EquipmentElement itemRosterElement2 = civilianEquipment[equipmentIndex2];
                 if (itemRosterElement2.Item is not null)
                 {
                     num += town.GetItemPrice(itemRosterElement2, null, false);

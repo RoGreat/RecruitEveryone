@@ -3,8 +3,8 @@
 	<!-- Recruit Everyone -->
   <PropertyGroup>
 		<ModuleName>$(MSBuildProjectName)</ModuleName>
-		<Version>1.1.5</Version>
-		<GameVersion>1.5.10</GameVersion>
+		<Version>1.1.6</Version>
+		<GameVersion>1.5.9</GameVersion>
 		<Authors>RoGreat</Authors>
 	</PropertyGroup>
 	
