@@ -22,8 +22,6 @@ namespace RecruitEveryone.Behaviors
 	{
 		public MBReadOnlyList<CharacterObject>? WandererTemplates { get; private set; }
 
-		// Problem is that it does not permanently change the occupation
-		// I believe it is tied to the _originCharacter field (template)
 		private void OccupationToWanderer(CharacterObject character)
 		{
 			if (character.Occupation != Occupation.Wanderer)
@@ -43,18 +41,23 @@ namespace RecruitEveryone.Behaviors
 		{
 			foreach (Hero hero in Hero.All.ToListQ())
 			{
+				// Fix if they are not a proper companion
 				if (hero.IsPlayerCompanion)
 				{
-					// In case the equipment bug is still on the save
-					_battleEquipment = hero.BattleEquipment.Clone(false);
-					AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(hero, _battleEquipment);
-					AdjustEquipmentImp(hero.BattleEquipment);
 					if (hero.IsNotable)
 					{
 						RemoveNotable(hero);
 					}
 					OccupationToWanderer(hero.CharacterObject);
 				}
+			}
+			foreach (Hero hero in Hero.MainHero.CompanionsInParty.ToListQ())
+			{
+				// Fix tied equipment bug
+				Equipment battleEquipment = hero.BattleEquipment.Clone();
+				Equipment civilianEquipment = hero.CivilianEquipment.Clone();
+				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, battleEquipment);
+				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, civilianEquipment);
 			}
 
 			starter.AddDialogLine("wanderer_skip_intro", "wanderer_preintroduction", "hero_main_options", "{=LUiQ6bpo}Very well, then. What is it?", new ConversationSentence.OnConditionDelegate(conversation_wanderer_skip_preintroduction_on_condition), null, 200, null);
@@ -109,9 +112,14 @@ namespace RecruitEveryone.Behaviors
 		private bool conversation_companion_hire_gold_on_condition()
 		{
 			CharacterObject character = CharacterObject.OneToOneConversationCharacter;
+			_battleEquipment = null;
 			if (_characterTemplates is null)
 			{
 				_characterTemplates = new Dictionary<int, CharacterObject>();
+			}
+			if (_battleEquipments is null)
+			{
+				_battleEquipments = new Dictionary<int, Equipment>();
 			}
 			if (_wandererTemplates is null)
             {
@@ -124,28 +132,29 @@ namespace RecruitEveryone.Behaviors
 				{
 					_wandererTemplate = WandererTemplates.GetRandomElement();
 
-				AddTemplate:
+					AddTemplate:
 					if (_wandererTemplate is not null)
 					{
 						_characterTemplate = CharacterObject.CreateFrom(_wandererTemplate, false);
 						_characterTemplate.IsFemale = character.IsFemale;
 						_characterTemplate.Culture = character.Culture;
 						_characterTemplates.Add(_agent, _characterTemplate);
-						_characterTemplates.TryGetValue(_agent, out _characterTemplate);
-						List<CharacterObject> battleEquipmentTemplates = WandererTemplates.WhereQ((CharacterObject c) => c.Culture == Settlement.CurrentSettlement.Culture && c.IsFemale  == character.IsFemale).ToListQ();
-						if (battleEquipmentTemplates is not null || !battleEquipmentTemplates.IsEmpty())
+						// To hopefully curtail custom culture crashes
+						if (character.Culture == Settlement.CurrentSettlement.Culture)
 						{
-
-
+							List<CharacterObject>  battleEquipmentTemplates = WandererTemplates.WhereQ((CharacterObject c) => c.Culture == Settlement.CurrentSettlement.Culture && c.IsFemale == character.IsFemale).ToListQ();
 							CharacterObject battleEquipmentTemplate = battleEquipmentTemplates.GetRandomElementInefficiently();
-							// You have to clone them since they are all tied to the same equipment set otherwise
-							// Learned from DeliverOffspring function
-							_battleEquipment = battleEquipmentTemplate.RandomBattleEquipment.Clone(false);
+							_battleEquipment = battleEquipmentTemplate.RandomBattleEquipment.Clone();
 						}
 						else
 						{
-							_battleEquipment = _wandererTemplate.FirstCivilianEquipment.Clone(false);
+							List<CharacterObject> battleEquipmentTemplates = WandererTemplates.WhereQ((CharacterObject c) => c.IsFemale == character.IsFemale).ToListQ();
+							CharacterObject battleEquipmentTemplate = battleEquipmentTemplates.GetRandomElementInefficiently();
+							_battleEquipment = _wandererTemplate.RandomBattleEquipment.Clone();
 						}
+						// Going by the dictionary system instead of doing the wanderer equipment system...
+						// Does increase the cost though.
+						_battleEquipments.Add(_agent, _battleEquipment);
 					}
 					else
 					{
@@ -153,14 +162,14 @@ namespace RecruitEveryone.Behaviors
 						goto AddTemplate;
 					}
 				}
+				_battleEquipments.TryGetValue(_agent, out _battleEquipment);
 			}
 			else
             {
 				_characterTemplate = character;
 				_wandererTemplate = WandererTemplates.GetRandomElement();
-				_battleEquipment = Hero.OneToOneConversationHero.CivilianEquipment;
+				_battleEquipment = Hero.OneToOneConversationHero.BattleEquipment.Clone();
 			}
-			AdjustEquipmentImp(_battleEquipment!);
 			_hiringPrice = RECompanionHiringPriceCalculationModel.GetCompanionHiringPrice(character, _characterTemplate!, _battleEquipment!);
 
 			MBTextManager.SetTextVariable("GOLD_AMOUNT", _hiringPrice);
@@ -191,32 +200,6 @@ namespace RecruitEveryone.Behaviors
 				MBTextManager.SetTextVariable("HIRING_COST_EXPLANATION", "{=9g6FB5Y7}There are some townspeople who've looked after me here, made sure I was fed and that. I'd like to give them something before I go. Could I ask for {GOLD_AMOUNT}{GOLD_ICON} as an advance?[rb:trivial]", false);
 			}
 			return true;
-		}
-
-		private void AdjustEquipmentImp(Equipment equipment)
-		{
-			ItemModifier @object = MBObjectManager.Instance.GetObject<ItemModifier>("companion_armor");
-			ItemModifier object2 = MBObjectManager.Instance.GetObject<ItemModifier>("companion_weapon");
-			ItemModifier object3 = MBObjectManager.Instance.GetObject<ItemModifier>("companion_horse");
-			for (EquipmentIndex equipmentIndex = EquipmentIndex.WeaponItemBeginSlot; equipmentIndex < EquipmentIndex.NumEquipmentSetSlots; equipmentIndex++)
-			{
-				EquipmentElement equipmentElement = equipment[equipmentIndex];
-				if (equipmentElement.Item != null)
-				{
-					if (equipmentElement.Item.ArmorComponent != null)
-					{
-						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, @object);
-					}
-					else if (equipmentElement.Item.HorseComponent != null)
-					{
-						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, object3);
-					}
-					else if (equipmentElement.Item.WeaponComponent != null)
-					{
-						equipment[equipmentIndex] = new EquipmentElement(equipmentElement.Item, object2);
-					}
-				}
-			}
 		}
 
 		private bool conversation_hero_hire_on_condition()
@@ -263,8 +246,9 @@ namespace RecruitEveryone.Behaviors
 				hero.CharacterObject.Name = textObject;
 
 				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(hero, agent.BodyPropertiesValue.StaticProperties);
-				AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(hero, _battleEquipment);
-				AccessTools.Property(typeof(Hero), "CivilianEquipment").SetValue(hero, agent.SpawnEquipment);
+
+				Equipment civilianEquipment = agent.SpawnEquipment.Clone();
+				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, civilianEquipment);
 
 				if (CampaignMission.Current.Location is not null)
 				{
@@ -282,6 +266,9 @@ namespace RecruitEveryone.Behaviors
 				hero = Hero.OneToOneConversationHero;
 				CharacterObject character = hero.CharacterObject;
 				_characterTemplate = CharacterObject.CreateFrom(_wandererTemplate, false);
+
+				Equipment civilianEquipment = hero.CivilianEquipment.Clone();
+
 				_characterTemplate.IsFemale = character.IsFemale;
 				_characterTemplate.Culture = character.Culture;
 				_characterTemplate.Name = hero.Name;
@@ -291,11 +278,13 @@ namespace RecruitEveryone.Behaviors
 
 				AccessTools.Property(typeof(CharacterObject), "HeroObject").SetValue(_characterTemplate, hero);
 				AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(_characterTemplate.HeroObject, staticBodyProperties);
-				AccessTools.Property(typeof(Hero), "BattleEquipment").SetValue(_characterTemplate.HeroObject, _battleEquipment);
-				AccessTools.Property(typeof(Hero), "CivilianEquipment").SetValue(_characterTemplate.HeroObject, _battleEquipment);
+
+				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, civilianEquipment);
 
 				RemoveNotable(hero);
 			}
+
+			EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, _battleEquipment);
 
 			OccupationToWanderer(hero.CharacterObject);
 
@@ -311,8 +300,6 @@ namespace RecruitEveryone.Behaviors
 				MobileParty mobileParty = caravanParty.MobileParty;
 				if (mobileParty is not null)
 				{
-					// Even when transferring caravan ownership, game crashes when disbanding the caravan
-					// Reported that this IS a legitimate crash that TaleWorlds are looking into in e1.5.8
 					CaravanPartyComponent.TransferCaravanOwnership(mobileParty, Hero.MainHero);
 				}
 			}
@@ -321,9 +308,6 @@ namespace RecruitEveryone.Behaviors
 				hero.Issue.CompleteIssueWithCancel();
 			}
 			GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, hero, _hiringPrice, false);
-
-			AdjustEquipmentImp(hero.BattleEquipment);
-
 			AddCompanionAction.Apply(Clan.PlayerClan, hero);
 			AddHeroToPartyAction.Apply(hero, MobileParty.MainParty, true);
 			CampaignEventDispatcher.Instance.OnHeroCreated(hero, false);
@@ -363,8 +347,6 @@ namespace RecruitEveryone.Behaviors
 				case Occupation.Blacksmith:
 					textObject = new TextObject("{=theblacksmith} the Blacksmith");
 					break;
-				// IsNotable defined as: this.IsArtisan || this.IsGangLeader || this.IsPreacher || this.IsMerchant || this.IsRuralNotable || this.IsHeadman. 
-				// Should already have a name so don't bother.
 				case Occupation.ShopWorker:
 					textObject = new TextObject("{=theshopworker} the Shop Worker");
 					break;
@@ -422,18 +404,20 @@ namespace RecruitEveryone.Behaviors
 
 		private Dictionary<int, CharacterObject>? _characterTemplates;
 
+		private CharacterObject? _characterTemplate;
+
 		private List<CharacterObject>? _wandererTemplates;
 
 		private CharacterObject? _wandererTemplate;
 
-		private CharacterObject? _characterTemplate;
+		private Dictionary<int, Equipment>? _battleEquipments;
+
+		private Equipment? _battleEquipment;
 
 		private List<int>? _recruitedAgents;
 
 		private int _agent;
 
 		private int _hiringPrice;
-
-		private Equipment? _battleEquipment;
 	}
 }
