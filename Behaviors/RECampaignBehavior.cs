@@ -32,8 +32,11 @@ namespace RecruitEveryone.Behaviors
 		private void RemoveNotable(Hero hero)
         {
 			List<Hero> _notables = (List<Hero>)AccessTools.Field(typeof(NotablePowerManagementBehavior), "_notables").GetValue(Campaign.Current.GetCampaignBehavior<NotablePowerManagementBehavior>());
-			_notables.Remove(hero);
-			AccessTools.Field(typeof(NotablePowerManagementBehavior), "_notables").SetValue(Campaign.Current.GetCampaignBehavior<NotablePowerManagementBehavior>(), _notables);
+			if (_notables.Contains(hero))
+			{
+				_notables.Remove(hero);
+				AccessTools.Field(typeof(NotablePowerManagementBehavior), "_notables").SetValue(Campaign.Current.GetCampaignBehavior<NotablePowerManagementBehavior>(), _notables);
+			}
 		}
 
 		protected void AddDialogs(CampaignGameStarter starter)
@@ -43,10 +46,7 @@ namespace RecruitEveryone.Behaviors
 				// Fix if they are not a proper companion
 				if (hero.IsPlayerCompanion)
 				{
-					if (hero.IsNotable)
-					{
-						RemoveNotable(hero);
-					}
+					RemoveNotable(hero);
 					OccupationToWanderer(hero.CharacterObject);
 
 					// Fix shared equipment bug
@@ -254,6 +254,9 @@ namespace RecruitEveryone.Behaviors
 				}
 				hero.HasMet = true;
 				hero.ChangeState(Hero.CharacterStates.Active);
+
+				// Names!
+				AccessTools.Field(typeof(Agent), "_name").SetValue(_agent, hero.Name);
 			}
 			else
 			{
@@ -279,10 +282,7 @@ namespace RecruitEveryone.Behaviors
 
 				EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, _civilianEquipment);
 
-				if (hero.IsNotable)
-				{
-					RemoveNotable(hero);
-				}
+				RemoveNotable(hero);
 			}
 			EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, _battleEquipment);
 			OccupationToWanderer(hero.CharacterObject);
@@ -301,7 +301,6 @@ namespace RecruitEveryone.Behaviors
 			GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, hero, _hiringPrice, false);
 			AddCompanionAction.Apply(Clan.PlayerClan, hero);
 			AddHeroToPartyAction.Apply(hero, MobileParty.MainParty, true);
-			CampaignEventDispatcher.Instance.OnHeroCreated(hero, false);
 		}
 
 		private void AdjustEquipmentImp(Equipment equipment)
