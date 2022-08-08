@@ -1,7 +1,6 @@
 ﻿using System;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Conversation;
-using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
 using HarmonyLib;
 using RecruitEveryone.Patches;
