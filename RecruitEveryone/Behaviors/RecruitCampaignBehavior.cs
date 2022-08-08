@@ -1,26 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using Helpers;
-using MountAndBlade.CampaignBehaviors;
-using SandBox.CampaignBehaviors;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.Conversation;
-using TaleWorlds.Core;
-using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
 using HarmonyLib;
-// using RecruitEveryone.Models;
 using RecruitEveryone.Patches;
-using TaleWorlds.CampaignSystem.CharacterDevelopment;
+using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.Party;
+using System.Collections.Generic;
 
 namespace RecruitEveryone.Behaviors
 {
     internal class RecruitEveryoneCampaignBehavior : CampaignBehaviorBase /* CampaignBehaviorBase */
     {
+        Hero? _hero = null;
+
         /* LordConversationsCampaignBehavior */
         protected void AddDialogs(CampaignGameStarter starter)
         {
@@ -40,39 +34,57 @@ namespace RecruitEveryone.Behaviors
         private void RecruitCharacter(CampaignGameStarter starter, string start, string end = "close_window")
         {
             /* Planning on making a temporary hero to utilize native methods */
-            starter.AddPlayerLine("RE_main_option_faction_hire", start, start + "_companion_hire", "{=OlKbD2fa}I can use someone like you in my company.", () => !CampaignBehaviorPatches.conversation_hero_hire_on_condition(), new ConversationSentence.OnConsequenceDelegate(create_new_hero_consequence), 100, null, null);
+            starter.AddPlayerLine("RE_main_option_faction_hire", start, start + "_companion_hire", "{=OlKbD2fa}I can use someone like you in my company.", new ConversationSentence.OnConditionDelegate(conversation_hero_hire_on_condition), new ConversationSentence.OnConsequenceDelegate(create_new_hero_consequence), 100, null, null);
             starter.AddDialogLine("RE_companion_hire", start + "_companion_hire", start + "_player_companion_hire_response", "{=fDjQOR5s}{HIRING_COST_EXPLANATION}", new ConversationSentence.OnConditionDelegate(CampaignBehaviorPatches.conversation_companion_hire_gold_on_condition), null, 100, null);
-            starter.AddPlayerLine("RE_companion_hire_capacity_full", start + "_player_companion_hire_response", end, "{=afdN8ZU7}Thinking again, I already have more companions than I can manage.", new ConversationSentence.OnConditionDelegate(CampaignBehaviorPatches.too_many_companions), null, 100, null, null);
-            starter.AddPlayerLine("RE_player_companion_hire_response_1", start + "_player_companion_hire_response", "hero_leave", "{=EiFPu9Np}Right... {GOLD_AMOUNT} Here you are.", new ConversationSentence.OnConditionDelegate(CampaignBehaviorPatches.conversation_companion_hire_on_condition), new ConversationSentence.OnConsequenceDelegate(CampaignBehaviorPatches.conversation_companion_hire_on_consequence), 100, null, null);
-            starter.AddPlayerLine("RE_player_companion_hire_response_2", start + "_player_companion_hire_response", end, "{=65UMAav2}I can't afford that just now.", () => !CampaignBehaviorPatches.too_many_companions(), null, 100, null, null);
+            starter.AddPlayerLine("RE_companion_hire_capacity_full", start + "_player_companion_hire_response", end, "{=afdN8ZU7}Thinking again, I already have more companions than I can manage.", new ConversationSentence.OnConditionDelegate(CampaignBehaviorPatches.too_many_companions), new ConversationSentence.OnConsequenceDelegate(conversation_exit_consequence), 100, null, null);
+            starter.AddPlayerLine("RE_player_companion_hire_response_1", start + "_player_companion_hire_response", "hero_leave", "{=EiFPu9Np}Right... {GOLD_AMOUNT} Here you are.", new ConversationSentence.OnConditionDelegate(CampaignBehaviorPatches.conversation_companion_hire_on_condition), new ConversationSentence.OnConsequenceDelegate(new_hero_hired), 100, null, null);
+            starter.AddPlayerLine("RE_player_companion_hire_response_2", start + "_player_companion_hire_response", end, "{=65UMAav2}I can't afford that just now.", () => !CampaignBehaviorPatches.too_many_companions(), new ConversationSentence.OnConsequenceDelegate(conversation_exit_consequence), 100, null, null);
+        }
+
+        private bool conversation_hero_hire_on_condition()
+        {
+            return Hero.OneToOneConversationHero is null;
         }
 
         private void create_new_hero_consequence()
         {
-            CharacterObject character = Campaign.Current.ConversationManager.OneToOneConversationCharacter;
             Agent agent = (Agent)Campaign.Current.ConversationManager.OneToOneConversationAgent;
+            CharacterObject character = Campaign.Current.ConversationManager.OneToOneConversationCharacter;
+
             if (!character.IsHero)
             {
-                /* Template Hero */
-                Hero? hero = null;
-                HeroCreator.CreateBasicHero(character, out hero, character.StringId);
-                hero.SetBirthDay(CampaignTime.Now - CampaignTime.Years(agent.Age));
-                AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(hero, agent.BodyPropertiesValue.StaticProperties);
-                // I remember that setting a culture can be very buggy
-                hero.Culture = Hero.MainHero.CurrentSettlement.Culture;
-                TextObject firstName;
-                TextObject fullName;
-                NameGenerator.Current.GenerateHeroNameAndHeroFullName(hero, out firstName, out fullName, false);
-                hero.SetName(fullName, firstName);
-                AccessTools.Method(typeof(HeroCreator), "ModifyAppearanceByTraits").Invoke(null, new object[] { hero });
-                CampaignEventDispatcher.Instance.OnHeroCreated(hero, false);
-                
-                /* STEPS AFTER THIS */
-                // Differentiate CharacterObjects when leaving convos
-                // I think that's it?
+                // Create a new hero
+                _hero = HeroCreator.CreateSpecialHero(character, Hero.MainHero.CurrentSettlement, Clan.PlayerClan, Clan.PlayerClan, (int)agent.Age);
 
-                /* DOES NOT WORK D: */
-                // HeroCreator.CreateSpecialHero(character, Hero.MainHero.CurrentSettlement, null, null, (int)Campaign.Current.ConversationManager.OneToOneConversationAgent.Age);
+                // hero.StaticBodyProperties = agent.BodyPropertiesValue.StaticProperties;
+                AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(_hero, agent.BodyPropertiesValue.StaticProperties);
+
+                // Attach hero to character for now
+                if (character.HeroObject is null)
+                {
+                    // character.HeroObject = hero;
+                    AccessTools.Property(typeof(CharacterObject), "HeroObject").SetValue(character, _hero);
+                }
+            }
+        }
+
+        private void new_hero_hired()
+        {
+            // Last is to call the repurposed hire consequence
+            CampaignBehaviorPatches.conversation_companion_hire_on_consequence();
+
+            // And discard the temporary hero...
+            conversation_exit_consequence();
+        }
+
+        private void conversation_exit_consequence()
+        {
+            CharacterObject character = Campaign.Current.ConversationManager.OneToOneConversationCharacter;
+
+            if (character.HeroObject is not null)
+            {
+                // character.HeroObject = null;
+                AccessTools.Property(typeof(CharacterObject), "HeroObject").SetValue(character, null);
             }
         }
 
