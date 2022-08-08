@@ -50,6 +50,5 @@ namespace RecruitEveryone.Patches
         {
             conversation_companion_hire_on_consequence_patch(new LordConversationsCampaignBehavior());
         }
-        
     }
 }
