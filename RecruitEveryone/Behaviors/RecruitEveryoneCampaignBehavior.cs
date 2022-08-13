@@ -11,7 +11,7 @@ using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.Core;
 using Helpers;
 using TaleWorlds.CampaignSystem.CampaignBehaviors;
-using MarryAnyone.Settings;
+using RecruitEveryone.Settings;
 
 namespace RecruitEveryone.Behaviors
 {
@@ -83,7 +83,7 @@ namespace RecruitEveryone.Behaviors
 
         private void create_new_hero_consequence()
         {
-            IRESettingsProvider settings = new RESettings();
+            RESettings settings = new();
 
             CharacterObject character = Campaign.Current.ConversationManager.OneToOneConversationCharacter;
             Agent agent = (Agent)Campaign.Current.ConversationManager.OneToOneConversationAgent;
@@ -92,12 +92,12 @@ namespace RecruitEveryone.Behaviors
             {
                 CharacterObject template = character;
                 // CompanionCampaignBehavior -> IntializeCompanionTemplateList()
-                if (settings.TemplateCharacter == 1)
+                if (settings.TemplateCharacter == "Wanderer")
                 {
                     // Give hero random wanderer's focus, skills, and combat equipment with same culture and sex
                     template = character.Culture.NotableAndWandererTemplates.GetRandomElementWithPredicate((CharacterObject x) => x.Occupation == Occupation.Wanderer && x.IsFemale == character.IsFemale);
                 }
-                else if (settings.TemplateCharacter == 2)
+                else if (settings.TemplateCharacter == "Lords")
                 {
                     // Give hero random lord's focus, skills, and combat equipment with same culture and sex
                     template = character.Culture.LordTemplates.GetRandomElementWithPredicate((CharacterObject x) => x.IsFemale == character.IsFemale);
