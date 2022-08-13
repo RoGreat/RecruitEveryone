@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using RecruitEveryone.Behaviors;
 using SandBox.CampaignBehaviors;
 using System;
 
@@ -15,7 +16,7 @@ namespace RecruitEveryone.Patches
         }
         public static bool too_many_companions()
         {
-            return too_many_companions_patch(new LordConversationsCampaignBehavior());
+            return too_many_companions_patch(RecruitEveryoneCampaignBehavior.LordConversationsCampaignBehaviorInstance!);
         }
 
         [HarmonyReversePatch]
@@ -26,7 +27,7 @@ namespace RecruitEveryone.Patches
         }
         public static bool conversation_companion_hire_gold_on_condition()
         {
-            return conversation_companion_hire_gold_on_condition_patch(new LordConversationsCampaignBehavior());
+            return conversation_companion_hire_gold_on_condition_patch(RecruitEveryoneCampaignBehavior.LordConversationsCampaignBehaviorInstance!);
         }
 
         [HarmonyReversePatch]
@@ -37,7 +38,7 @@ namespace RecruitEveryone.Patches
         }
         public static bool conversation_companion_hire_on_condition()
         {
-            return conversation_companion_hire_on_condition_patch(new LordConversationsCampaignBehavior());
+            return conversation_companion_hire_on_condition_patch(RecruitEveryoneCampaignBehavior.LordConversationsCampaignBehaviorInstance!);
         }
 
         [HarmonyReversePatch]
@@ -48,7 +49,7 @@ namespace RecruitEveryone.Patches
         }
         public static void conversation_companion_hire_on_consequence()
         {
-            conversation_companion_hire_on_consequence_patch(new LordConversationsCampaignBehavior());
+            conversation_companion_hire_on_consequence_patch(RecruitEveryoneCampaignBehavior.LordConversationsCampaignBehaviorInstance!);
         }
     }
 }
