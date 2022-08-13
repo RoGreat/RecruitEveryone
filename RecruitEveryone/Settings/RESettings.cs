@@ -1,37 +1,25 @@
-﻿using MCM.Abstractions.Attributes;
-using MCM.Abstractions.Attributes.v2;
-using MCM.Abstractions.Dropdown;
-using MCM.Abstractions.Settings.Base.Global;
-
-namespace MarryAnyone.Settings
+﻿namespace RecruitEveryone.Settings
 {
-    internal class RESettings : AttributeGlobalSettings<RESettings>, IRESettingsProvider
+    internal class RESettings
     {
-        public override string Id => "RESettings";
+        private IRESettingsProvider _provider;
 
-        public override string DisplayName => "Recruit Everyone" + $" {typeof(RESettings).Assembly.GetName().Version.ToString(3)}";
+        public bool ToggleCompanionLimit { get => _provider.ToggleCompanionLimit; set => _provider.ToggleCompanionLimit = value; }
 
-        public override string FolderName => "RecruitEveryone";
+        public int CompanionLimit { get => _provider.CompanionLimit; set => _provider.CompanionLimit = value; }
 
-        public override string FormatType => "json2";
+        public string TemplateCharacter { get => _provider.TemplateCharacter; set => _provider.TemplateCharacter = value; }
 
-
-        [SettingPropertyBool("Toggle Companion Limit", RequireRestart = false, IsToggle = true)]
-        [SettingPropertyGroup("Companion Limit")]
-        public bool ToggleCompanionLimit { get; set; } = false;
-
-        [SettingPropertyInteger("Companion Limit", minValue: 0, maxValue: 500, RequireRestart = false, HintText = "Set how many companions you can have in your party")]
-        [SettingPropertyGroup("Companion Limit")]
-        public int CompanionLimit { get; set; } = 20;
-
-        [SettingPropertyBool("Template Character", RequireRestart = false, HintText = "Set which template will be used for the character's loadout and skillset")]
-        public DropdownDefault<string> TemplateCharacterDropdown { get; set; } = new DropdownDefault<string>(new string[]
+        public RESettings()
         {
-            "Default",
-            "Wanderer",
-            "Lord"
-        }, selectedIndex: 0);
-
-        public string TemplateCharacter { get => TemplateCharacterDropdown.SelectedValue; set => TemplateCharacterDropdown.SelectedValue = value; }
+            if (RECustomSettings.Instance is not null)
+            {
+                _provider = RECustomSettings.Instance;
+            }
+            else
+            {
+                _provider = new HardcodedRESettings();
+            }
+        }
     }
 }

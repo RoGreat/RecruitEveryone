@@ -1,4 +1,4 @@
-﻿using MarryAnyone.Settings;
+﻿using RecruitEveryone.Settings;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameComponents;
 
@@ -8,7 +8,7 @@ namespace RecruitEveryone.Models
     {
         public override int GetCompanionLimit(Clan clan)
         {
-            IRESettingsProvider settings = new RESettings();
+            RESettings settings = new();
 
             if (settings.ToggleCompanionLimit)
             {

@@ -1,4 +1,4 @@
-﻿namespace MarryAnyone.Settings
+﻿namespace RecruitEveryone.Settings
 {
     internal class HardcodedRESettings : IRESettingsProvider
     {
