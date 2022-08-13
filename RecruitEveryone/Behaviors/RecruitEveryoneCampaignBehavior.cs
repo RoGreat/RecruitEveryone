@@ -8,11 +8,10 @@ using System.Collections.Generic;
 using TaleWorlds.Library;
 using SandBox.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.Extensions;
 using TaleWorlds.Core;
 using Helpers;
 using TaleWorlds.CampaignSystem.CampaignBehaviors;
-using TaleWorlds.LinQuick;
+using MarryAnyone.Settings;
 
 namespace RecruitEveryone.Behaviors
 {
@@ -84,17 +83,28 @@ namespace RecruitEveryone.Behaviors
 
         private void create_new_hero_consequence()
         {
+            IRESettingsProvider settings = new RESettings();
+
             CharacterObject character = Campaign.Current.ConversationManager.OneToOneConversationCharacter;
             Agent agent = (Agent)Campaign.Current.ConversationManager.OneToOneConversationAgent;
 
             if (!_heroes!.ContainsKey(_key))
             {
-                // Give hero random wanderer's focus, skills, and combat equipment with same culture and sex
-                // CompanionCampaignBehavior -> IntiializeCompanionTemplateList()
-                CharacterObject wandererTemplate = character.Culture.NotableAndWandererTemplates.GetRandomElementWithPredicate((CharacterObject x) => x.Occupation == Occupation.Wanderer && x.IsFemale == character.IsFemale);
+                CharacterObject template = character;
+                // CompanionCampaignBehavior -> IntializeCompanionTemplateList()
+                if (settings.TemplateCharacter == 1)
+                {
+                    // Give hero random wanderer's focus, skills, and combat equipment with same culture and sex
+                    template = character.Culture.NotableAndWandererTemplates.GetRandomElementWithPredicate((CharacterObject x) => x.Occupation == Occupation.Wanderer && x.IsFemale == character.IsFemale);
+                }
+                else if (settings.TemplateCharacter == 2)
+                {
+                    // Give hero random lord's focus, skills, and combat equipment with same culture and sex
+                    template = character.Culture.LordTemplates.GetRandomElementWithPredicate((CharacterObject x) => x.IsFemale == character.IsFemale);
+                }
 
                 // Create a new hero!
-                _hero = HeroCreator.CreateSpecialHero(character, Hero.MainHero.CurrentSettlement, null, null, (int)agent.Age);
+                _hero = HeroCreator.CreateSpecialHero(template, Hero.MainHero.CurrentSettlement, null, null, (int)agent.Age);
 
                 // Meet character for first time
                 _hero.HasMet = true;
@@ -113,6 +123,7 @@ namespace RecruitEveryone.Behaviors
                 EquipmentHelper.AssignHeroEquipmentFromEquipment(_hero, civilianEquipment);
                 EquipmentHelper.AssignHeroEquipmentFromEquipment(_hero, battleEquipment);
                 // Throw equipment adjustment for good measure
+                // this.AdjustEquipment(_hero);
                 AccessTools.Method(typeof(CompanionsCampaignBehavior), "AdjustEquipment").Invoke(CompanionsCampaignBehaviorInstance, new object[] { _hero });
 
                 HeroHelper.DetermineInitialLevel(_hero);
