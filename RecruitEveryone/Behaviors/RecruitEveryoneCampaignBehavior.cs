@@ -7,11 +7,14 @@ using RecruitEveryone.Patches;
 using System.Collections.Generic;
 using TaleWorlds.Library;
 using Helpers;
+using SandBox.CampaignBehaviors;
 
 namespace RecruitEveryone.Behaviors
 {
     internal class RecruitEveryoneCampaignBehavior : CampaignBehaviorBase /* CampaignBehaviorBase */
     {
+        public static LordConversationsCampaignBehavior? LordConversationsCampaignBehaviorInstance;
+
         private Hero? _hero = null;
 
         private static Dictionary<int, Hero>? _heroes;
@@ -19,6 +22,13 @@ namespace RecruitEveryone.Behaviors
         private static List<int>? _hired;
 
         private int _key;
+
+        public RecruitEveryoneCampaignBehavior()
+        {
+            _hired = new();
+            _heroes = new();
+            LordConversationsCampaignBehaviorInstance = new();
+        }
 
         /* LordConversationsCampaignBehavior */
         protected void AddDialogs(CampaignGameStarter starter)
@@ -38,11 +48,6 @@ namespace RecruitEveryone.Behaviors
 
         private void RecruitCharacter(CampaignGameStarter starter, string start, string end = "close_window")
         {
-            /* Initialize collections */
-            _hired = new();
-            _heroes = new();
-
-            /* Dialogs */
             starter.AddPlayerLine("RE_main_option_faction_hire", start, start + "_companion_hire", "{=OlKbD2fa}I can use someone like you in my company.", new ConversationSentence.OnConditionDelegate(conversation_hero_hire_on_condition), new ConversationSentence.OnConsequenceDelegate(create_new_hero_consequence), 100, null, null);
             starter.AddDialogLine("RE_companion_hire", start + "_companion_hire", start + "_player_companion_hire_response", "{=fDjQOR5s}{HIRING_COST_EXPLANATION}", new ConversationSentence.OnConditionDelegate(CampaignBehaviorPatches.conversation_companion_hire_gold_on_condition), null, 100, null);
             starter.AddPlayerLine("RE_companion_hire_capacity_full", start + "_player_companion_hire_response", end, "{=afdN8ZU7}Thinking again, I already have more companions than I can manage.", new ConversationSentence.OnConditionDelegate(CampaignBehaviorPatches.too_many_companions), new ConversationSentence.OnConsequenceDelegate(conversation_exit_consequence), 100, null, null);
