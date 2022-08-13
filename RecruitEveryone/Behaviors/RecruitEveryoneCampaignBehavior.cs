@@ -6,16 +6,23 @@ using HarmonyLib;
 using RecruitEveryone.Patches;
 using System.Collections.Generic;
 using TaleWorlds.Library;
-using Helpers;
 using SandBox.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.ViewModelCollection.CharacterDeveloper;
+using TaleWorlds.CampaignSystem.Extensions;
+using TaleWorlds.Core;
+using Helpers;
+using TaleWorlds.CampaignSystem.CampaignBehaviors;
+using TaleWorlds.LinQuick;
 
 namespace RecruitEveryone.Behaviors
 {
     internal class RecruitEveryoneCampaignBehavior : CampaignBehaviorBase /* CampaignBehaviorBase */
     {
         public static LordConversationsCampaignBehavior? LordConversationsCampaignBehaviorInstance;
+
+        public static CompanionsCampaignBehavior? CompanionsCampaignBehaviorInstance;
+
+        public static CharacterDevelopmentCampaignBehavior? CharacterDevelopmentCampaignBehaviorInstance;
 
         private Hero? _hero = null;
 
@@ -30,6 +37,8 @@ namespace RecruitEveryone.Behaviors
             _hired = new();
             _heroes = new();
             LordConversationsCampaignBehaviorInstance = new();
+            CompanionsCampaignBehaviorInstance = new();
+            CharacterDevelopmentCampaignBehaviorInstance = new();
         }
 
         /* LordConversationsCampaignBehavior */
@@ -51,10 +60,10 @@ namespace RecruitEveryone.Behaviors
         private void RecruitCharacter(CampaignGameStarter starter, string start, string end = "close_window")
         {
             starter.AddPlayerLine("RE_main_option_faction_hire", start, start + "_companion_hire", "{=OlKbD2fa}I can use someone like you in my company.", new ConversationSentence.OnConditionDelegate(conversation_hero_hire_on_condition), new ConversationSentence.OnConsequenceDelegate(create_new_hero_consequence), 100, null, null);
-            starter.AddDialogLine("RE_companion_hire", start + "_companion_hire", start + "_player_companion_hire_response", "{=fDjQOR5s}{HIRING_COST_EXPLANATION}", new ConversationSentence.OnConditionDelegate(CampaignBehaviorPatches.conversation_companion_hire_gold_on_condition), null, 100, null);
-            starter.AddPlayerLine("RE_companion_hire_capacity_full", start + "_player_companion_hire_response", end, "{=afdN8ZU7}Thinking again, I already have more companions than I can manage.", new ConversationSentence.OnConditionDelegate(CampaignBehaviorPatches.too_many_companions), new ConversationSentence.OnConsequenceDelegate(conversation_exit_consequence), 100, null, null);
-            starter.AddPlayerLine("RE_player_companion_hire_response_1", start + "_player_companion_hire_response", "hero_leave", "{=EiFPu9Np}Right... {GOLD_AMOUNT} Here you are.", new ConversationSentence.OnConditionDelegate(CampaignBehaviorPatches.conversation_companion_hire_on_condition), new ConversationSentence.OnConsequenceDelegate(new_hero_hired), 100, null, null);
-            starter.AddPlayerLine("RE_player_companion_hire_response_2", start + "_player_companion_hire_response", end, "{=65UMAav2}I can't afford that just now.", () => !CampaignBehaviorPatches.too_many_companions(), new ConversationSentence.OnConsequenceDelegate(conversation_exit_consequence), 100, null, null);
+            starter.AddDialogLine("RE_companion_hire", start + "_companion_hire", start + "_player_companion_hire_response", "{=fDjQOR5s}{HIRING_COST_EXPLANATION}", new ConversationSentence.OnConditionDelegate(LordConversationsCampaignBehaviorPatches.conversation_companion_hire_gold_on_condition), null, 100, null);
+            starter.AddPlayerLine("RE_companion_hire_capacity_full", start + "_player_companion_hire_response", end, "{=afdN8ZU7}Thinking again, I already have more companions than I can manage.", new ConversationSentence.OnConditionDelegate(LordConversationsCampaignBehaviorPatches.too_many_companions), new ConversationSentence.OnConsequenceDelegate(conversation_exit_consequence), 100, null, null);
+            starter.AddPlayerLine("RE_player_companion_hire_response_1", start + "_player_companion_hire_response", "hero_leave", "{=EiFPu9Np}Right... {GOLD_AMOUNT} Here you are.", new ConversationSentence.OnConditionDelegate(LordConversationsCampaignBehaviorPatches.conversation_companion_hire_on_condition), new ConversationSentence.OnConsequenceDelegate(new_hero_hired), 100, null, null);
+            starter.AddPlayerLine("RE_player_companion_hire_response_2", start + "_player_companion_hire_response", end, "{=65UMAav2}I can't afford that just now.", () => !LordConversationsCampaignBehaviorPatches.too_many_companions(), new ConversationSentence.OnConsequenceDelegate(conversation_exit_consequence), 100, null, null);
         }
 
         /* CommonVillagersCampaignBehavior -> conversation_town_or_village_start_on_condition */
@@ -80,6 +89,10 @@ namespace RecruitEveryone.Behaviors
 
             if (!_heroes!.ContainsKey(_key))
             {
+                // Give hero random wanderer's focus, skills, and combat equipment with same culture and sex
+                // CompanionCampaignBehavior -> IntiializeCompanionTemplateList()
+                CharacterObject wandererTemplate = character.Culture.NotableAndWandererTemplates.GetRandomElementWithPredicate((CharacterObject x) => x.Occupation == Occupation.Wanderer && x.IsFemale == character.IsFemale);
+
                 // Create a new hero!
                 _hero = HeroCreator.CreateSpecialHero(character, Hero.MainHero.CurrentSettlement, null, null, (int)agent.Age);
 
@@ -93,8 +106,17 @@ namespace RecruitEveryone.Behaviors
                 // hero.StaticBodyProperties = agent.BodyPropertiesValue.StaticProperties;
                 AccessTools.Property(typeof(Hero), "StaticBodyProperties").SetValue(_hero, agent.BodyPropertiesValue.StaticProperties);
 
-                // Give hero the agent's clothes
-                EquipmentHelper.AssignHeroEquipmentFromEquipment(_hero, agent.SpawnEquipment.Clone());
+                // Give hero agent's equipment
+                Equipment civilianEquipment = agent.SpawnEquipment.Clone();
+                // CharacterObject -> RandomBattleEquipment
+                Equipment battleEquipment = character.AllEquipments.GetRandomElementWithPredicate((Equipment e) => !e.IsCivilian).Clone();
+                EquipmentHelper.AssignHeroEquipmentFromEquipment(_hero, civilianEquipment);
+                EquipmentHelper.AssignHeroEquipmentFromEquipment(_hero, battleEquipment);
+                // Throw equipment adjustment for good measure
+                AccessTools.Method(typeof(CompanionsCampaignBehavior), "AdjustEquipment").Invoke(CompanionsCampaignBehaviorInstance, new object[] { _hero });
+
+                HeroHelper.DetermineInitialLevel(_hero);
+                CharacterDevelopmentCampaignBehaviorInstance!.DevelopCharacterStats(_hero);
             }
             else
             {
@@ -110,21 +132,15 @@ namespace RecruitEveryone.Behaviors
             }
         }
 
+        /* Review CampaignCheats -> AddCompanion */
         private void new_hero_hired()
         {
-            // Last is to call the hire consequence
-            CampaignBehaviorPatches.conversation_companion_hire_on_consequence();
-
-            // Set hero to Wanderer occupation to stop weird stuff from happening
             _hero!.SetNewOccupation(Occupation.Wanderer);
-
-            // Consider the new hero as hired
-            _hired!.Add(_key);
-
-            RemoveHeroObjectFromCharacter();
-
-            // Character is now active
             _hero.ChangeState(Hero.CharacterStates.Active);
+            // AddCompanionAction and AddHeroToPartyAction
+            LordConversationsCampaignBehaviorPatches.conversation_companion_hire_on_consequence();
+            _hired!.Add(_key);
+            RemoveHeroObjectFromCharacter();
         }
 
         private void conversation_exit_consequence()

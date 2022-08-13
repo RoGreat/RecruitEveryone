@@ -5,11 +5,11 @@ using System;
 
 namespace RecruitEveryone.Patches
 {
-    [HarmonyPatch]
-    internal class CampaignBehaviorPatches
+    [HarmonyPatch(typeof(LordConversationsCampaignBehavior))]
+    internal class LordConversationsCampaignBehaviorPatches
     {
         [HarmonyReversePatch]
-        [HarmonyPatch(typeof(LordConversationsCampaignBehavior), "too_many_companions")]
+        [HarmonyPatch("too_many_companions")]
         private static bool too_many_companions_patch(object instance)
         {
             throw new NotImplementedException();
@@ -20,7 +20,7 @@ namespace RecruitEveryone.Patches
         }
 
         [HarmonyReversePatch]
-        [HarmonyPatch(typeof(LordConversationsCampaignBehavior), "conversation_companion_hire_gold_on_condition")]
+        [HarmonyPatch("conversation_companion_hire_gold_on_condition")]
         private static bool conversation_companion_hire_gold_on_condition_patch(object instance)
         {
             throw new NotImplementedException();
@@ -31,7 +31,7 @@ namespace RecruitEveryone.Patches
         }
 
         [HarmonyReversePatch]
-        [HarmonyPatch(typeof(LordConversationsCampaignBehavior), "conversation_companion_hire_on_condition")]
+        [HarmonyPatch("conversation_companion_hire_on_condition")]
         private static bool conversation_companion_hire_on_condition_patch(object instance)
         {
             throw new NotImplementedException();
@@ -42,7 +42,7 @@ namespace RecruitEveryone.Patches
         }
 
         [HarmonyReversePatch]
-        [HarmonyPatch(typeof(LordConversationsCampaignBehavior), "conversation_companion_hire_on_consequence")]
+        [HarmonyPatch("conversation_companion_hire_on_consequence")]
         private static void conversation_companion_hire_on_consequence_patch(object instance)
         {
             throw new NotImplementedException();
