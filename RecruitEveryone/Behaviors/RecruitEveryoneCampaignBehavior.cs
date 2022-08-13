@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using TaleWorlds.Library;
 using Helpers;
 using SandBox.CampaignBehaviors;
+using TaleWorlds.CampaignSystem.Actions;
 
 namespace RecruitEveryone.Behaviors
 {
@@ -81,9 +82,6 @@ namespace RecruitEveryone.Behaviors
                 // Create a new hero!
                 _hero = HeroCreator.CreateSpecialHero(character, Hero.MainHero.CurrentSettlement, null, null, (int)agent.Age);
 
-                // Disable character at first
-                _hero.ChangeState(Hero.CharacterStates.Disabled);
-
                 // Meet character for first time
                 _hero.HasMet = true;
 
@@ -138,6 +136,9 @@ namespace RecruitEveryone.Behaviors
                 // character.HeroObject = null;
                 AccessTools.Property(typeof(CharacterObject), "HeroObject").SetValue(character, null);
             }
+
+            // Learned that this is used in some Issues to disable quest heroes!
+            DisableHeroAction.Apply(_hero);
         }
 
         public override void RegisterEvents()

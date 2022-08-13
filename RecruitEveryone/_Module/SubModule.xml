@@ -9,7 +9,6 @@
   <!-- e1.8.0 -->
   <ModuleCategory value="Singleplayer"/>
   <DependedModules>
-    <DependedModule Id="Bannerlord.Harmony" DependentVersion="v$harmonyversion$" />
     <DependedModule Id="Native" DependentVersion="e$gameversion$" />
     <DependedModule Id="SandBoxCore" DependentVersion="e$gameversion$" />
     <DependedModule Id="Sandbox" DependentVersion="e$gameversion$" />
@@ -19,7 +18,6 @@
   <!-- Community Dependency Metadata -->
   <!-- https://github.com/BUTR/Bannerlord.BUTRLoader#for-modders -->
   <DependedModuleMetadatas>
-    <DependedModuleMetadata id="Bannerlord.Harmony" order="LoadBeforeThis" version="v$harmonyversion$" />
     <DependedModuleMetadata id="Native" order="LoadBeforeThis" version="e$gameversion$.*" />
     <DependedModuleMetadata id="SandBoxCore" order="LoadBeforeThis" version="e$gameversion$.*" />
     <DependedModuleMetadata id="Sandbox" order="LoadBeforeThis" version="e$gameversion$.*" />
