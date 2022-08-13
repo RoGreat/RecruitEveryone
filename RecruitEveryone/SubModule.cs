@@ -3,6 +3,7 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
 using RecruitEveryone.Behaviors;
+using RecruitEveryone.Models;
 
 namespace RecruitEveryone
 {
@@ -21,6 +22,7 @@ namespace RecruitEveryone
             {
                 CampaignGameStarter campaignGameStarter = (CampaignGameStarter)gameStarterObject;
                 campaignGameStarter.AddBehavior(new RecruitEveryoneCampaignBehavior());
+                campaignGameStarter.AddModel(new RecruitEveryoneClanModel());
             }
         }
     }
