@@ -9,6 +9,7 @@ using TaleWorlds.Library;
 using Helpers;
 using SandBox.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.ViewModelCollection.CharacterDeveloper;
 
 namespace RecruitEveryone.Behaviors
 {
@@ -120,8 +121,7 @@ namespace RecruitEveryone.Behaviors
             // Consider the new hero as hired
             _hired!.Add(_key);
 
-            // Remove hero association from character
-            conversation_exit_consequence();
+            RemoveHeroObjectFromCharacter();
 
             // Character is now active
             _hero.ChangeState(Hero.CharacterStates.Active);
@@ -129,16 +129,22 @@ namespace RecruitEveryone.Behaviors
 
         private void conversation_exit_consequence()
         {
+            RemoveHeroObjectFromCharacter();
+
+            // Learned that this is used in some Issues to disable quest heroes!
+            DisableHeroAction.Apply(_hero);
+        }
+
+        private void RemoveHeroObjectFromCharacter()
+        {
             CharacterObject character = Campaign.Current.ConversationManager.OneToOneConversationCharacter;
 
+            // Remove hero association from character
             if (character.HeroObject is not null)
             {
                 // character.HeroObject = null;
                 AccessTools.Property(typeof(CharacterObject), "HeroObject").SetValue(character, null);
             }
-
-            // Learned that this is used in some Issues to disable quest heroes!
-            DisableHeroAction.Apply(_hero);
         }
 
         public override void RegisterEvents()
