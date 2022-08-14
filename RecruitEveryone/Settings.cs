@@ -2,13 +2,25 @@
 {
     internal sealed class Settings
     {
-        private ISettingsProvider _provider;
+        private readonly ISettingsProvider _provider;
 
-        public bool ToggleCompanionLimit { get => _provider.ToggleCompanionLimit; set => _provider.ToggleCompanionLimit = value; }
+        public bool ToggleCompanionLimit 
+        { 
+            get => _provider.ToggleCompanionLimit; 
+            set => _provider.ToggleCompanionLimit = value; 
+        }
 
-        public int CompanionLimit { get => _provider.CompanionLimit; set => _provider.CompanionLimit = value; }
+        public int CompanionLimit 
+        { 
+            get => _provider.CompanionLimit; 
+            set => _provider.CompanionLimit = value; 
+        }
 
-        public string TemplateCharacter { get => _provider.TemplateCharacter; set => _provider.TemplateCharacter = value; }
+        public string TemplateCharacter
+        {
+            get => _provider.TemplateCharacter;
+            set => _provider.TemplateCharacter = value;
+        }
 
         public Settings()
         {
@@ -18,11 +30,12 @@
             }
             else if (CustomConfig.Instance is not null)
             {
-                _provider = CustomConfig.Instance;
+                _provider = CustomConfig.Instance!;
             }
             else
             {
-                _provider = new CustomConfig();
+                new CustomConfig();
+                _provider = CustomConfig.Instance!;
             }
         }
     }

@@ -16,29 +16,26 @@
   <PropertyGroup>
     <HarmonyVersion>2.2.2</HarmonyVersion>
     <MCMVersion>4.7.7</MCMVersion>
-		<JSONVersion>13.0.1</JSONVersion>
   </PropertyGroup>
 	
-	<!-- JSON -->
-	<PropertyGroup>
-		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-		<GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-	</PropertyGroup>
+	<!-- Assembly Reference -->
+	<ItemGroup>
+    <Reference Include="Newtonsoft.Json" HintPath="$(GameFolder)\bin\Win64_Shipping_Client\Newtonsoft.Json.dll" Private="False" />
+  </ItemGroup>
 
   <ItemGroup>
 		<!-- Dependencies -->
 		<PackageReference Include="Lib.Harmony" Version="$(HarmonyVersion)" />
 		<PackageReference Include="Bannerlord.MCM" Version="$(MCMVersion)" />
-		<PackageReference Include="Newtonsoft.Json" Version="$(JSONVersion)" />
-		<!-- BUTR Libraries and Dependencies -->
+		<!-- BUTR Libraries and other Development Dependencies -->
     <PackageReference Include="Nullable" Version="1.3.1" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
     <PackageReference Include="IsExternalInit" Version="1.0.3" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
     <PackageReference Include="Bannerlord.BuildResources" Version="1.0.1.68 " PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
     <PackageReference Include="Harmony.Extensions" Version="3.1.0.61" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
     <PackageReference Include="BUTR.Harmony.Analyzer" Version="1.0.1.44" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
-    <!-- Reference Assemblies -->
+    <!-- Assembly Reference Metadata -->
 		<PackageReference Include="Bannerlord.ReferenceAssemblies.Core.EarlyAccess" Version="$(GameVersion).*" PrivateAssets="All" />
     <PackageReference Include="Bannerlord.ReferenceAssemblies.SandBox.EarlyAccess" Version="$(GameVersion).*" PrivateAssets="All" />
   </ItemGroup>
-
+	
 </Project>
