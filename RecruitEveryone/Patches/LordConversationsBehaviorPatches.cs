@@ -6,7 +6,7 @@ using System;
 namespace RecruitEveryone.Patches
 {
     [HarmonyPatch(typeof(LordConversationsCampaignBehavior))]
-    internal class LordConversationsCampaignBehaviorPatches
+    internal sealed class LordConversationsCampaignBehaviorPatches
     {
         [HarmonyReversePatch]
         [HarmonyPatch("too_many_companions")]

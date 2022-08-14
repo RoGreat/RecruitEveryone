@@ -11,11 +11,10 @@ using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.Core;
 using Helpers;
 using TaleWorlds.CampaignSystem.CampaignBehaviors;
-using RecruitEveryone.Settings;
 
 namespace RecruitEveryone.Behaviors
 {
-    internal class RecruitEveryoneCampaignBehavior : CampaignBehaviorBase /* CampaignBehaviorBase */
+    internal class RecruitEveryoneCampaignBehavior : CampaignBehaviorBase
     {
         public static LordConversationsCampaignBehavior? LordConversationsCampaignBehaviorInstance;
 
@@ -83,7 +82,7 @@ namespace RecruitEveryone.Behaviors
 
         private void create_new_hero_consequence()
         {
-            RESettings settings = new();
+            Settings settings = new();
 
             CharacterObject character = Campaign.Current.ConversationManager.OneToOneConversationCharacter;
             Agent agent = (Agent)Campaign.Current.ConversationManager.OneToOneConversationAgent;
@@ -119,10 +118,11 @@ namespace RecruitEveryone.Behaviors
                 // Give hero agent's equipment
                 Equipment civilianEquipment = agent.SpawnEquipment.Clone();
                 // CharacterObject -> RandomBattleEquipment
-                Equipment battleEquipment = character.AllEquipments.GetRandomElementWithPredicate((Equipment e) => !e.IsCivilian).Clone();
+                Equipment battleEquipment = template.AllEquipments.GetRandomElementWithPredicate((Equipment e) => !e.IsCivilian).Clone();
                 EquipmentHelper.AssignHeroEquipmentFromEquipment(_hero, civilianEquipment);
                 EquipmentHelper.AssignHeroEquipmentFromEquipment(_hero, battleEquipment);
-                // Throw equipment adjustment for good measure
+                // Do equipment adjustment with companions
+                // Not exactly sure what it does...
                 // this.AdjustEquipment(_hero);
                 AccessTools.Method(typeof(CompanionsCampaignBehavior), "AdjustEquipment").Invoke(CompanionsCampaignBehaviorInstance, new object[] { _hero });
 

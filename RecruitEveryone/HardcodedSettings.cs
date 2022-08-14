@@ -1,6 +1,6 @@
-﻿namespace RecruitEveryone.Settings
+﻿namespace RecruitEveryone
 {
-    internal class HardcodedRESettings : IRESettingsProvider
+    internal sealed class HardcodedSettings : ISettingsProvider
     {
         public bool ToggleCompanionLimit { get; set; } = false;
 

@@ -1,6 +1,6 @@
-﻿namespace RecruitEveryone.Settings
+﻿namespace RecruitEveryone
 {
-    internal interface IRESettingsProvider
+    internal interface ISettingsProvider
     {
         bool ToggleCompanionLimit { get; set; }
 

@@ -7,7 +7,7 @@ using RecruitEveryone.Models;
 
 namespace RecruitEveryone
 {
-    internal class SubModule : MBSubModuleBase
+    internal sealed class SubModule : MBSubModuleBase
     {
         protected override void OnSubModuleLoad()
         {
