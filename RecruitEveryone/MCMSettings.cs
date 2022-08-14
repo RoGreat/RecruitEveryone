@@ -16,40 +16,13 @@ namespace RecruitEveryone
         public override string FormatType => "json2";
 
 
-        private bool _toggleCompanionLimit = false;
-
-        private int _companionLimit = 20;
-
-
         [SettingPropertyBool("Toggle Companion Limit", RequireRestart = false, IsToggle = true)]
         [SettingPropertyGroup("Companion Limit")]
-        public bool ToggleCompanionLimit
-        {
-            get => _toggleCompanionLimit;
-            set
-            {
-                if (_toggleCompanionLimit != value)
-                {
-                    _toggleCompanionLimit = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        public bool ToggleCompanionLimit { get; set; }
 
         [SettingPropertyInteger("Companion Limit", minValue: 0, maxValue: 500, RequireRestart = false, HintText = "Set how many companions you can have in your party")]
         [SettingPropertyGroup("Companion Limit")]
-        public int CompanionLimit
-        {
-            get => _companionLimit;
-            set
-            {
-                if (_companionLimit != value)
-                {
-                    _companionLimit = value;
-                    OnPropertyChanged();
-                }
-            }
-        }
+        public int CompanionLimit { get; set; }
 
         [SettingPropertyDropdown("Template Character", RequireRestart = false, HintText = "Set the template character that is used to set things like hero name, skills, and equipment")]
         [SettingPropertyGroup("Hero")]
@@ -67,7 +40,6 @@ namespace RecruitEveryone
                 if (TemplateCharacterDropdown.SelectedValue != value)
                 {
                     TemplateCharacterDropdown.SelectedValue = value;
-                    OnPropertyChanged();
                 }
             }
         }

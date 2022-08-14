@@ -1,10 +1,11 @@
 ﻿using System;
 using System.IO;
 using Newtonsoft.Json;
+using TaleWorlds.Library;
 
 namespace RecruitEveryone
 {
-    internal class Config
+    internal sealed class Config
     {
         public bool ToggleCompanionLimit { get; set; }
         public int CompanionLimit { get; set; }
@@ -36,16 +37,16 @@ namespace RecruitEveryone
             {
                 var config = new Config
                 {
-                    ToggleCompanionLimit = ToggleCompanionLimit,
-                    CompanionLimit = CompanionLimit,
-                    TemplateCharacter = TemplateCharacter
+                    ToggleCompanionLimit = _toggleCompanionLimit,
+                    CompanionLimit = _companionLimit,
+                    TemplateCharacter = _templateCharacter
                 };
                 string jsonString = JsonConvert.SerializeObject(config, Formatting.Indented);
                 File.WriteAllText(_filePath, jsonString);
             }
             catch (Exception e)
             {
-                Console.WriteLine("{0} Exception when writing to config.", e);
+                InformationManager.DisplayMessage(new InformationMessage($"{e.Message} Error when writing to Recruit Everyone's Config.json."));
             }
         }
 
@@ -55,13 +56,14 @@ namespace RecruitEveryone
             {
                 string jsonString = File.ReadAllText(_filePath);
                 var config = JsonConvert.DeserializeObject<Config>(jsonString);
-                ToggleCompanionLimit = config!.ToggleCompanionLimit;
-                CompanionLimit = config.CompanionLimit;
-                TemplateCharacter = config.TemplateCharacter!;
+                _toggleCompanionLimit = config!.ToggleCompanionLimit;
+                _companionLimit = config.CompanionLimit;
+                _templateCharacter = config.TemplateCharacter!;
             }
             catch (Exception e)
             {
-                Console.WriteLine("{0} Exception when reading from config.", e);
+                
+                InformationManager.DisplayMessage(new InformationMessage($"{e.Message} Error when reading from Recruit Everyone's Config.json."));
             }
         }
 
