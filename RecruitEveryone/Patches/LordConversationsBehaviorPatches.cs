@@ -1,7 +1,9 @@
-﻿using HarmonyLib;
-using RecruitEveryone.Behaviors;
+﻿using System;
+
 using SandBox.CampaignBehaviors;
-using System;
+
+using HarmonyLib;
+using RecruitEveryone.Behaviors;
 
 namespace RecruitEveryone.Patches
 {

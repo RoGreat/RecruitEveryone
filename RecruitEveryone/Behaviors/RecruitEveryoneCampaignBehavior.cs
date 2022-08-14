@@ -1,16 +1,18 @@
 ﻿using System;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Conversation;
+using System.Collections.Generic;
+
+using TaleWorlds.Core;
+using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.CampaignBehaviors;
+using TaleWorlds.CampaignSystem.Conversation;
+using TaleWorlds.CampaignSystem.Actions;
+using SandBox.CampaignBehaviors;
+using Helpers;
+
 using HarmonyLib;
 using RecruitEveryone.Patches;
-using System.Collections.Generic;
-using TaleWorlds.Library;
-using SandBox.CampaignBehaviors;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.Core;
-using Helpers;
-using TaleWorlds.CampaignSystem.CampaignBehaviors;
 
 namespace RecruitEveryone.Behaviors
 {

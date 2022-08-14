@@ -16,6 +16,10 @@
             {
                 _provider = MCMSettings.Instance;
             }
+            else if (HardcodedSettings.Instance is not null)
+            {
+                _provider = HardcodedSettings.Instance;
+            }
             else
             {
                 _provider = new HardcodedSettings();

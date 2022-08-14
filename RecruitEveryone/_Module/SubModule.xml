@@ -30,6 +30,9 @@
       <SubModuleClassType value="$modulename$.SubModule" />
       <Tags />
     </SubModule>
+	</SubModules>
+	<!-- MCMv4 Soft Dependency --> 
+	<SubModules>
 		<SubModule>
 			<Name value="MCMv4" />
 			<DLLName value="MCMv4.dll" />
