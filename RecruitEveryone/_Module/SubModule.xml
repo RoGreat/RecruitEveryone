@@ -6,8 +6,8 @@
   <Version value="v$version$" />
   <Official value="false" />
   <DefaultModule value="false" />
-	<ModuleCategory value="Singleplayer"/>
-	<Url value="https://www.nexusmods.com/mountandblade2bannerlord/mods/2359" />
+  <ModuleCategory value="Singleplayer"/>
+  <Url value="https://www.nexusmods.com/mountandblade2bannerlord/mods/2359" />
   <!-- e1.8.0 -->
   <DependedModules>
     <DependedModule Id="Native" DependentVersion="e$gameversion$" />
@@ -17,18 +17,18 @@
   <!-- Community Dependency Metadata -->
   <!-- https://github.com/BUTR/Bannerlord.BUTRLoader#for-modders -->
   <DependedModuleMetadatas>
-		<DependedModuleMetadata id="Native" order="LoadBeforeThis" version="e$gameversion$.*" />
+    <DependedModuleMetadata id="Native" order="LoadBeforeThis" version="e$gameversion$.*" />
     <DependedModuleMetadata id="SandBoxCore" order="LoadBeforeThis" version="e$gameversion$.*" />
     <DependedModuleMetadata id="Sandbox" order="LoadBeforeThis" version="e$gameversion$.*" />
     <DependedModuleMetadata id="StoryMode" order="LoadBeforeThis" version="e$gameversion$.*" optional="true" />
     <DependedModuleMetadata id="CustomBattle" order="LoadBeforeThis" version="e$gameversion$.*" optional="true" />
   </DependedModuleMetadatas>
   <SubModules>
-		<SubModule>
+    <SubModule>
       <Name value="$modulename$" />
       <DLLName value="$modulename$.dll" />
       <SubModuleClassType value="$modulename$.SubModule" />
       <Tags />
     </SubModule>
-	</SubModules>
+  </SubModules>
 </Module>
