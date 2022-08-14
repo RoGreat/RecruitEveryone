@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using Newtonsoft.Json;
+
 using TaleWorlds.Library;
 
 namespace RecruitEveryone
@@ -62,7 +63,6 @@ namespace RecruitEveryone
             }
             catch (Exception e)
             {
-                
                 InformationManager.DisplayMessage(new InformationMessage($"{e.Message} Error when reading from Recruit Everyone's Config.json."));
             }
         }
