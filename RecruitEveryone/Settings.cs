@@ -1,8 +1,8 @@
-﻿namespace RecruitEveryone.Settings
+﻿namespace RecruitEveryone
 {
-    internal class RESettings
+    internal sealed class Settings
     {
-        private IRESettingsProvider _provider;
+        private ISettingsProvider _provider;
 
         public bool ToggleCompanionLimit { get => _provider.ToggleCompanionLimit; set => _provider.ToggleCompanionLimit = value; }
 
@@ -10,15 +10,15 @@
 
         public string TemplateCharacter { get => _provider.TemplateCharacter; set => _provider.TemplateCharacter = value; }
 
-        public RESettings()
+        public Settings()
         {
-            if (RECustomSettings.Instance is not null)
+            if (MCMSettings.Instance is not null)
             {
-                _provider = RECustomSettings.Instance;
+                _provider = MCMSettings.Instance;
             }
             else
             {
-                _provider = new HardcodedRESettings();
+                _provider = new HardcodedSettings();
             }
         }
     }

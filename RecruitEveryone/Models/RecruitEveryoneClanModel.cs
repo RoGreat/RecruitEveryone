@@ -1,14 +1,13 @@
-﻿using RecruitEveryone.Settings;
-using TaleWorlds.CampaignSystem;
+﻿using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameComponents;
 
 namespace RecruitEveryone.Models
 {
-    internal class RecruitEveryoneClanModel : DefaultClanTierModel
+    internal sealed class RecruitEveryoneClanModel : DefaultClanTierModel
     {
         public override int GetCompanionLimit(Clan clan)
         {
-            RESettings settings = new();
+            Settings settings = new();
 
             if (settings.ToggleCompanionLimit)
             {
