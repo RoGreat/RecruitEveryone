@@ -1,7 +1,9 @@
-﻿using TaleWorlds.CampaignSystem;
+﻿using System;
 using System.Collections.Generic;
+
+using TaleWorlds.CampaignSystem;
 using TaleWorlds.Library;
-using System;
+
 
 namespace RecruitEveryone.CampaignSystem
 {

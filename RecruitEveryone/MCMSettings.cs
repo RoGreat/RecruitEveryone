@@ -59,6 +59,17 @@ namespace RecruitEveryone
             "Wanderer"
         }, selectedIndex: 0);
 
-        public string TemplateCharacter { get => TemplateCharacterDropdown.SelectedValue; set => TemplateCharacterDropdown.SelectedValue = value; }
+        public string TemplateCharacter 
+        { 
+            get => TemplateCharacterDropdown.SelectedValue;
+            set
+            {
+                if (TemplateCharacterDropdown.SelectedValue != value)
+                {
+                    TemplateCharacterDropdown.SelectedValue = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
     }
 }
