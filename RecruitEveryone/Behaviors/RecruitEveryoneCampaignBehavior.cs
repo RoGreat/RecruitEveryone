@@ -96,11 +96,6 @@ namespace RecruitEveryone.Behaviors
                     // Give hero random wanderer's focus, skills, and combat equipment with same culture and sex
                     template = character.Culture.NotableAndWandererTemplates.GetRandomElementWithPredicate((CharacterObject x) => x.Occupation == Occupation.Wanderer && x.IsFemale == character.IsFemale);
                 }
-                else if (settings.TemplateCharacter == "Lords")
-                {
-                    // Give hero random lord's focus, skills, and combat equipment with same culture and sex
-                    template = character.Culture.LordTemplates.GetRandomElementWithPredicate((CharacterObject x) => x.IsFemale == character.IsFemale);
-                }
 
                 // Create a new hero!
                 _hero = HeroCreator.CreateSpecialHero(template, Hero.MainHero.CurrentSettlement, null, null, (int)agent.Age);
