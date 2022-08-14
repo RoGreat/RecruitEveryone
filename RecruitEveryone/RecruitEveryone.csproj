@@ -12,13 +12,13 @@
     <GameVersion>1.8.0</GameVersion>
   </PropertyGroup>
 
-	<!-- Development Variables -->
+  <!-- Development Variables -->
   <PropertyGroup>
     <HarmonyVersion>2.2.2</HarmonyVersion>
     <MCMVersion>4.7.7</MCMVersion>
   </PropertyGroup>
 	
-	<!-- Assembly Reference -->
+  <!-- Assembly Reference -->
   <ItemGroup>
     <Reference Include="Newtonsoft.Json" HintPath="$(GameFolder)\bin\Win64_Shipping_Client\Newtonsoft.Json.dll" Private="False" />
   </ItemGroup>
