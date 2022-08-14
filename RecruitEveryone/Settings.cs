@@ -16,13 +16,13 @@
             {
                 _provider = MCMSettings.Instance;
             }
-            else if (HardcodedSettings.Instance is not null)
+            else if (CustomConfig.Instance is not null)
             {
-                _provider = HardcodedSettings.Instance;
+                _provider = CustomConfig.Instance;
             }
             else
             {
-                _provider = new HardcodedSettings();
+                _provider = new CustomConfig();
             }
         }
     }

@@ -14,6 +14,7 @@ namespace RecruitEveryone
         {
             base.OnSubModuleLoad();
             new Harmony("mod.bannerlord.everyone.recruit").PatchAll();
+            new CustomConfig();
         }
 
         protected override void OnGameStart(Game game, IGameStarter gameStarterObject)
