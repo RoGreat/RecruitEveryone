@@ -3,7 +3,7 @@ using MCM.Abstractions.Attributes.v2;
 using MCM.Abstractions.Dropdown;
 using MCM.Abstractions.Settings.Base.Global;
 
-namespace RecruitEveryone
+namespace RecruitEveryone.Settings
 {
     internal sealed class MCMSettings : AttributeGlobalSettings<MCMSettings>, ISettingsProvider
     {
@@ -16,31 +16,28 @@ namespace RecruitEveryone
         public override string FormatType => "json2";
 
 
-        [SettingPropertyBool("Toggle Companion Limit", RequireRestart = false, IsToggle = true)]
-        [SettingPropertyGroup("Companion Limit")]
+        [SettingPropertyBool("{=togglecompanionlimit}Toggle Companion Limit", RequireRestart = false, IsToggle = true)]
+        [SettingPropertyGroup("{=companionlimit}Companion Limit")]
         public bool ToggleCompanionLimit { get; set; }
 
-        [SettingPropertyInteger("Companion Limit", minValue: 0, maxValue: 500, RequireRestart = false, HintText = "Set how many companions you can have in your party")]
-        [SettingPropertyGroup("Companion Limit")]
+        [SettingPropertyInteger("{=companionlimit}Companion Limit", minValue: 0, maxValue: 500, RequireRestart = false, HintText = "{=companionlimit_desc}Set how many companions you can have in your party.")]
+        [SettingPropertyGroup("{=companionlimit}Companion Limit")]
         public int CompanionLimit { get; set; }
 
-        [SettingPropertyDropdown("Template Character", RequireRestart = false, HintText = "Set the template character that is used to set things like hero name, skills, and equipment")]
-        [SettingPropertyGroup("Hero")]
+        [SettingPropertyDropdown("{=templatechar}Template Character", RequireRestart = false, HintText = "{=templatechar_desc}Set the template character that is used to set things like hero name, skills, and equipment.")]
+        [SettingPropertyGroup("{=companion}Companion")]
         public DropdownDefault<string> TemplateCharacterDropdown { get; set; } = new DropdownDefault<string>(new string[]
         {
             "Default",
             "Wanderer"
         }, selectedIndex: 0);
 
-        public string TemplateCharacter 
-        { 
+        public string TemplateCharacter
+        {
             get => TemplateCharacterDropdown.SelectedValue;
             set
             {
-                if (TemplateCharacterDropdown.SelectedValue != value)
-                {
-                    TemplateCharacterDropdown.SelectedValue = value;
-                }
+                TemplateCharacterDropdown.SelectedValue = value;
             }
         }
     }

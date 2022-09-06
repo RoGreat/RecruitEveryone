@@ -3,8 +3,9 @@ using System.IO;
 using Newtonsoft.Json;
 
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
-namespace RecruitEveryone
+namespace RecruitEveryone.Settings
 {
     internal sealed class Config
     {
@@ -13,13 +14,13 @@ namespace RecruitEveryone
         public string? TemplateCharacter { get; set; }
     }
 
-    internal sealed class CustomConfig : ISettingsProvider
+    internal sealed class REConfig : ISettingsProvider
     {
-        public static CustomConfig? Instance;
+        public static REConfig? Instance { get; private set; }
 
-        private string _filePath = "..\\..\\Modules\\RecruitEveryone\\Config.json";
+        private readonly string _filePath = "..\\..\\Modules\\RecruitEveryone\\Config.json";
 
-        public CustomConfig()
+        public REConfig()
         {
             Instance = this;
             ReadConfig();
@@ -47,7 +48,9 @@ namespace RecruitEveryone
             }
             catch (Exception e)
             {
-                InformationManager.DisplayMessage(new InformationMessage($"{e.Message} Error when writing to Recruit Everyone's Config.json."));
+                TextObject textObject = new("{=write_error}{ERROR} Error when writing to Recruit Everyone's Config.json.");
+                textObject.SetTextVariable("ERROR", e.Message);
+                InformationManager.DisplayMessage(new InformationMessage(textObject.ToString()));
             }
         }
 
@@ -57,13 +60,20 @@ namespace RecruitEveryone
             {
                 string jsonString = File.ReadAllText(_filePath);
                 var config = JsonConvert.DeserializeObject<Config>(jsonString);
+                if (config.TemplateCharacter != "Default" && config.TemplateCharacter != "Wanderer")
+                {
+                    throw new Exception($"{config.TemplateCharacter} is not a valid TemplateCharacter. Valid options: \"Default\" or \"Wanderer\"");
+                }
                 _toggleCompanionLimit = config!.ToggleCompanionLimit;
                 _companionLimit = config.CompanionLimit;
                 _templateCharacter = config.TemplateCharacter!;
             }
             catch (Exception e)
             {
-                InformationManager.DisplayMessage(new InformationMessage($"{e.Message} Error when reading from Recruit Everyone's Config.json."));
+                TextObject textObject = new("{=read_error}{ERROR} Error when reading from Recruit Everyone's Config.json.");
+                textObject.SetTextVariable("ERROR", e.Message);
+                InformationManager.DisplayMessage(new InformationMessage(textObject.ToString()));
+                WriteConfig();
             }
         }
 

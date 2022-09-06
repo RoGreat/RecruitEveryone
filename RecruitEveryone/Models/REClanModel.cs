@@ -3,11 +3,11 @@ using TaleWorlds.CampaignSystem.GameComponents;
 
 namespace RecruitEveryone.Models
 {
-    internal sealed class RecruitEveryoneClanModel : DefaultClanTierModel
+    internal sealed class REClanModel : DefaultClanTierModel
     {
         public override int GetCompanionLimit(Clan clan)
         {
-            Settings settings = new();
+            RESettings settings = new();
 
             if (settings.ToggleCompanionLimit)
             {
