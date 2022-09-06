@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="string">
+	<tags>
+		<tag language="English" />
+	</tags>
+	<strings>
+		<string id="togglecompanionlimit" text="Toggle Companion Limit" />
+		<string id="companionlimit" text="Companion Limit" />
+		<string id="companionlimit_desc" text="Set how many companions you can have in your party." />
+		<string id="templatechar" text="Template Character" />
+		<string id="templatechar_desc" text="Set the template character that is used to set things like hero name, skills, and equipment." />
+		<string id="companion" text="Companion" />
+
+		<string id="write_error" text="{ERROR} Error when writing to Recruit Everyone's Config.json." />
+		<string id="read_error" text="{ERROR} Error when reading from Recruit Everyone's Config.json." />
+	</strings>
+</base>

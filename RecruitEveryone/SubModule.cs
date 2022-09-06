@@ -1,7 +1,6 @@
 ﻿using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
-
 using HarmonyLib;
 using RecruitEveryone.Behaviors;
 using RecruitEveryone.Models;
@@ -22,8 +21,8 @@ namespace RecruitEveryone
             if (game.GameType is Campaign)
             {
                 CampaignGameStarter campaignGameStarter = (CampaignGameStarter)gameStarterObject;
-                campaignGameStarter.AddBehavior(new RecruitEveryoneCampaignBehavior());
-                campaignGameStarter.AddModel(new RecruitEveryoneClanModel());
+                campaignGameStarter.AddBehavior(new RELordConversationsCampaignBehavior());
+                campaignGameStarter.AddModel(new REClanModel());
             }
         }
     }

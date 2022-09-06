@@ -1,6 +1,8 @@
-﻿namespace RecruitEveryone
+﻿using RecruitEveryone.Settings;
+
+namespace RecruitEveryone
 {
-    internal sealed class Settings
+    internal sealed class RESettings
     {
         private readonly ISettingsProvider _provider;
 
@@ -22,21 +24,18 @@
             set => _provider.TemplateCharacter = value;
         }
 
-        public Settings()
+        public RESettings()
         {
             if (MCMSettings.Instance is not null)
             {
                 _provider = MCMSettings.Instance;
+                return;
             }
-            else if (CustomConfig.Instance is not null)
+            else if (REConfig.Instance is null)
             {
-                _provider = CustomConfig.Instance!;
+                new REConfig();
             }
-            else
-            {
-                new CustomConfig();
-                _provider = CustomConfig.Instance!;
-            }
+            _provider = REConfig.Instance!;
         }
     }
 }

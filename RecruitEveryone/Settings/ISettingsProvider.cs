@@ -1,4 +1,4 @@
-﻿namespace RecruitEveryone
+﻿namespace RecruitEveryone.Settings
 {
     internal interface ISettingsProvider
     {
