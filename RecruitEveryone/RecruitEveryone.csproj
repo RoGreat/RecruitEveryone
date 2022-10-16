@@ -9,13 +9,13 @@
     <ModuleId>$(MSBuildProjectName)</ModuleId>
     <ModuleName>$(MSBuildProjectName)</ModuleName>
     <GameFolder>$(BANNERLORD_GAME_DIR)</GameFolder>
-    <GameVersion>1.8.0</GameVersion>
+    <GameVersion>1.9.0</GameVersion>
   </PropertyGroup>
 
   <!-- Development Variables -->
   <PropertyGroup>
     <HarmonyVersion>2.2.2</HarmonyVersion>
-    <MCMVersion>4.7.7</MCMVersion>
+    <MCMVersion>4.7.9</MCMVersion>
   </PropertyGroup>
 	
   <!-- Assembly Reference -->
