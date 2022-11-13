@@ -31,11 +31,12 @@ namespace RecruitEveryone
                 _provider = MCMSettings.Instance;
                 return;
             }
-            else if (REConfig.Instance is null)
+            else if (RESettingsConfig.Instance is null)
             {
-                new REConfig();
+                new RESettingsConfig();
             }
-            _provider = REConfig.Instance!;
+            _provider = RESettingsConfig.Instance!;
+            REConfig.Initialize();
         }
     }
 }

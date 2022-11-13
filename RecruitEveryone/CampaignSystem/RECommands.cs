@@ -48,7 +48,7 @@ namespace RecruitEveryone.CampaignSystem
                 return "Format is \"recruit_everyone.set_character_template [\"default\"/\"wanderer\"]\".";
             }
             string template = CampaignCheats.ConcatenateString(strings);
-            if (template == null)
+            if (template is null)
             {
                 return "Please enter \"default\" or \"wanderer\"";
             }
