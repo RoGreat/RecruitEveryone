@@ -4,6 +4,7 @@ using TaleWorlds.MountAndBlade;
 using HarmonyLib;
 using RecruitEveryone.Behaviors;
 using RecruitEveryone.Models;
+using RecruitEveryone.Settings;
 
 namespace RecruitEveryone
 {
@@ -13,6 +14,7 @@ namespace RecruitEveryone
         {
             base.OnSubModuleLoad();
             new Harmony("mod.bannerlord.everyone.recruit").PatchAll();
+            REConfig.Initialize();
         }
 
         protected override void OnGameStart(Game game, IGameStarter gameStarterObject)

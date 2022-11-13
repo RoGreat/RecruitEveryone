@@ -40,6 +40,10 @@ namespace RecruitEveryone.Settings
     {
         private static string _templateCharacter = "Default";
 
+        private static bool _toggleCompanionLimit = false;
+
+        private static int _companionLimit = 20;
+
         [ConfigPropertyUnbounded]
         public static string TemplateCharacter
         {
@@ -66,10 +70,38 @@ namespace RecruitEveryone.Settings
         }
 
         [ConfigPropertyUnbounded]
-        public static bool ToggleCompanionLimit { get; set; } = false;
+        public static bool ToggleCompanionLimit
+        {
+            get
+            {
+                return _toggleCompanionLimit;
+            }
+            set
+            {
+                if (_toggleCompanionLimit != value)
+                {
+                    _toggleCompanionLimit = value;
+                    Save();
+                }
+            }
+        }
 
         [ConfigPropertyUnbounded]
-        public static int CompanionLimit { get; set; } = 20;
+        public static int CompanionLimit
+        {
+            get
+            {
+                return _companionLimit;
+            }
+            set
+            {
+                if (_companionLimit != value)
+                {
+                    _companionLimit = value;
+                    Save();
+                }
+            }
+        }
 
         public static void Initialize()
         {
