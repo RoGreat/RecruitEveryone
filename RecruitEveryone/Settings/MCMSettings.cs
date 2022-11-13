@@ -1,7 +1,7 @@
 ﻿using MCM.Abstractions.Attributes;
 using MCM.Abstractions.Attributes.v2;
-using MCM.Abstractions.Dropdown;
-using MCM.Abstractions.Settings.Base.Global;
+using MCM.Abstractions.Base.Global;
+using MCM.Common;
 
 namespace RecruitEveryone.Settings
 {
@@ -26,7 +26,7 @@ namespace RecruitEveryone.Settings
 
         [SettingPropertyDropdown("{=templatechar}Template Character", RequireRestart = false, HintText = "{=templatechar_desc}Set the template character that is used to set things like hero name, skills, and equipment.")]
         [SettingPropertyGroup("{=companion}Companion")]
-        public DropdownDefault<string> TemplateCharacterDropdown { get; set; } = new DropdownDefault<string>(new string[]
+        public Dropdown<string> TemplateCharacterDropdown { get; set; } = new Dropdown<string>(new string[]
         {
             "Default",
             "Wanderer"

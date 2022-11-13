@@ -1,131 +1,237 @@
 ﻿using System;
-using System.IO;
-using Newtonsoft.Json;
-
+using System.Collections.Generic;
+using System.Reflection;
+using System.Text.RegularExpressions;
 using TaleWorlds.Library;
-using TaleWorlds.Localization;
 
 namespace RecruitEveryone.Settings
 {
-    internal sealed class Config
+    // When not using MCM, use RecrutiEveryoneConfig
+    internal sealed class RESettingsConfig : ISettingsProvider
     {
-        public bool ToggleCompanionLimit { get; set; }
-        public int CompanionLimit { get; set; }
-        public string? TemplateCharacter { get; set; }
-    }
+        public static RESettingsConfig? Instance { get; private set; }
 
-    internal sealed class REConfig : ISettingsProvider
-    {
-        public static REConfig? Instance { get; private set; }
-
-        private readonly string _filePath = "..\\..\\Modules\\RecruitEveryone\\Config.json";
-
-        public REConfig()
+        public RESettingsConfig()
         {
             Instance = this;
-            ReadConfig();
-            WriteConfig();
-        }
-
-        private bool _toggleCompanionLimit = false;
-
-        private int _companionLimit = 20;
-
-        private string _templateCharacter = "Default";
-
-        private void WriteConfig()
-        {
-            try
-            {
-                var config = new Config
-                {
-                    ToggleCompanionLimit = _toggleCompanionLimit,
-                    CompanionLimit = _companionLimit,
-                    TemplateCharacter = _templateCharacter
-                };
-                string jsonString = JsonConvert.SerializeObject(config, Formatting.Indented);
-                File.WriteAllText(_filePath, jsonString);
-            }
-            catch (Exception e)
-            {
-                TextObject textObject = new("{=write_error}{ERROR} Error when writing to Recruit Everyone's Config.json.");
-                textObject.SetTextVariable("ERROR", e.Message);
-                InformationManager.DisplayMessage(new InformationMessage(textObject.ToString()));
-            }
-        }
-
-        private void ReadConfig()
-        {
-            try
-            {
-                string jsonString = File.ReadAllText(_filePath);
-                var config = JsonConvert.DeserializeObject<Config>(jsonString);
-                if (config.TemplateCharacter != "Default" && config.TemplateCharacter != "Wanderer")
-                {
-                    throw new Exception($"{config.TemplateCharacter} is not a valid TemplateCharacter. Valid options: \"Default\" or \"Wanderer\"");
-                }
-                _toggleCompanionLimit = config!.ToggleCompanionLimit;
-                _companionLimit = config.CompanionLimit;
-                _templateCharacter = config.TemplateCharacter!;
-            }
-            catch (Exception e)
-            {
-                TextObject textObject = new("{=read_error}{ERROR} Error when reading from Recruit Everyone's Config.json.");
-                textObject.SetTextVariable("ERROR", e.Message);
-                InformationManager.DisplayMessage(new InformationMessage(textObject.ToString()));
-                WriteConfig();
-            }
-        }
-
-        public bool ToggleCompanionLimit
-        {
-            get
-            {
-                ReadConfig();
-                return _toggleCompanionLimit;
-            }
-            set
-            {
-                if (_toggleCompanionLimit != value)
-                {
-                    _toggleCompanionLimit = value;
-                    WriteConfig();
-                }
-            }
-        }
-
-        public int CompanionLimit
-        {
-            get
-            {
-                ReadConfig();
-                return _companionLimit;
-            }
-            set
-            {
-                if (_companionLimit != value)
-                {
-                    _companionLimit = value;
-                    WriteConfig();
-                }
-            }
         }
 
         public string TemplateCharacter
         {
+            get { return REConfig.TemplateCharacter; }
+            set { REConfig.TemplateCharacter = value; }
+        }
+
+        public bool ToggleCompanionLimit
+        {
+            get { return REConfig.ToggleCompanionLimit; }
+            set { REConfig.ToggleCompanionLimit = value; }
+        }
+
+        public int CompanionLimit
+        {
+            get { return REConfig.CompanionLimit; }
+            set { REConfig.CompanionLimit = value; }
+        }
+    }
+
+    // Adapted BannerlordConfig. Mainly for Steam Workshop compatibility.
+    internal static class REConfig
+    {
+        private static string _templateCharacter = "Default";
+
+        [ConfigPropertyUnbounded]
+        public static string TemplateCharacter
+        {
             get
             {
-                ReadConfig();
                 return _templateCharacter;
             }
             set
             {
                 if (_templateCharacter != value)
                 {
-                    _templateCharacter = value;
-                    WriteConfig();
+                    switch (_templateCharacter)
+                    {
+                        case "Default":
+                            _templateCharacter = value;
+                            break;
+                        case "Wanderer":
+                            _templateCharacter = value;
+                            break;
+                    }
+                    Save();
                 }
             }
+        }
+
+        [ConfigPropertyUnbounded]
+        public static bool ToggleCompanionLimit { get; set; } = false;
+
+        [ConfigPropertyUnbounded]
+        public static int CompanionLimit { get; set; } = 20;
+
+        public static void Initialize()
+        {
+            string text = REUtilities.LoadConfigFile();
+            if (string.IsNullOrEmpty(text))
+            {
+                Save();
+            }
+            else
+            {
+                bool flag = false;
+                string[] array = text.Split(new char[]
+                {
+                    '\n'
+                });
+                for (int i = 0; i < array.Length; i++)
+                {
+                    string[] array2 = array[i].Split(new char[]
+                    {
+                        '='
+                    });
+                    PropertyInfo property = typeof(REConfig).GetProperty(array2[0]);
+                    if (property is null)
+                    {
+                        flag = true;
+                    }
+                    else
+                    {
+                        string text2 = array2[1];
+                        try
+                        {
+                            if (property.PropertyType == typeof(string))
+                            {
+                                string value = Regex.Replace(text2, "\\r", "");
+                                property.SetValue(null, value);
+                            }
+                            else if (property.PropertyType == typeof(float))
+                            {
+                                if (float.TryParse(text2, out float num))
+                                {
+                                    property.SetValue(null, num);
+                                }
+                                else
+                                {
+                                    flag = true;
+                                }
+                            }
+                            else if (property.PropertyType == typeof(int))
+                            {
+                                if (int.TryParse(text2, out int num2))
+                                {
+                                    ConfigPropertyInt customAttribute = property.GetCustomAttribute<ConfigPropertyInt>();
+                                    if (customAttribute is null || customAttribute.IsValidValue(num2))
+                                    {
+                                        property.SetValue(null, num2);
+                                    }
+                                    else
+                                    {
+                                        flag = true;
+                                    }
+                                }
+                                else
+                                {
+                                    flag = true;
+                                }
+                            }
+                            else if (property.PropertyType == typeof(bool))
+                            {
+                                if (bool.TryParse(text2, out bool flag2))
+                                {
+                                    property.SetValue(null, flag2);
+                                }
+                                else
+                                {
+                                    flag = true;
+                                }
+                            }
+                            else
+                            {
+                                flag = true;
+                            }
+                        }
+                        catch
+                        {
+                            flag = true;
+                        }
+                    }
+                }
+                if (flag)
+                {
+                    Save();
+                }
+            }
+        }
+
+        public static SaveResult Save()
+        {
+            Dictionary<PropertyInfo, object> dictionary = new();
+            foreach (PropertyInfo propertyInfo in typeof(REConfig).GetProperties())
+            {
+                if (propertyInfo.GetCustomAttribute<ConfigProperty>() is not null)
+                {
+                    dictionary.Add(propertyInfo, propertyInfo.GetValue(null, null));
+                }
+            }
+            string text = "";
+            foreach (KeyValuePair<PropertyInfo, object> keyValuePair in dictionary)
+            {
+                text = string.Concat(new string[]
+                {
+                    text,
+                    keyValuePair.Key.Name,
+                    "=",
+                    keyValuePair.Value.ToString(),
+                    "\n"
+                });
+            }
+            SaveResult result = REUtilities.SaveConfigFile(text);
+            return result;
+        }
+
+        private interface IConfigPropertyBoundChecker<T>
+        {
+        }
+
+        private abstract class ConfigProperty : Attribute
+        {
+        }
+
+        private sealed class ConfigPropertyInt : ConfigProperty
+        {
+            public ConfigPropertyInt(int[] possibleValues, bool isRange = false)
+            {
+                _possibleValues = possibleValues;
+                _isRange = isRange;
+                bool isRange2 = _isRange;
+            }
+
+            public bool IsValidValue(int value)
+            {
+                if (_isRange)
+                {
+                    return value >= _possibleValues[0] && value <= _possibleValues[1];
+                }
+                int[] possibleValues = _possibleValues;
+                for (int i = 0; i < possibleValues.Length; i++)
+                {
+                    if (possibleValues[i] == value)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            private int[] _possibleValues;
+
+            private bool _isRange;
+        }
+
+        private sealed class ConfigPropertyUnbounded : ConfigProperty
+        {
         }
     }
 }
