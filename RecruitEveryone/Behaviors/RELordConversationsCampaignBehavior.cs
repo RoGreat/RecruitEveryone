@@ -195,7 +195,7 @@ namespace RecruitEveryone.Behaviors
             AgentName!(conversationAgent) = _companionHero.Name;
 
             // Meet character for first time
-            _companionHero.HasMet = true;
+            _companionHero.SetHasMet();
 
             // Add hero to heroes list
             _heroes.Add(conversationAgent, _companionHero);
