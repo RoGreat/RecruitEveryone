@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
@@ -195,7 +195,7 @@ namespace RecruitEveryone.Behaviors
             AgentName!(conversationAgent) = _companionHero.Name;
 
             // Meet character for first time
-            _companionHero.HasMet = true;
+            _companionHero.SetHasMet();
 
             // Add hero to heroes list
             _heroes.Add(conversationAgent, _companionHero);
@@ -214,10 +214,7 @@ namespace RecruitEveryone.Behaviors
             CompanionsCampaignBehavior companionsCampaignBehaviorInstance = Campaign.Current.CampaignBehaviorManager.GetBehavior<CompanionsCampaignBehavior>();
             CompanionAdjustEquipment!(companionsCampaignBehaviorInstance, _companionHero);
 
-            HeroHelper.DetermineInitialLevel(_companionHero);
-
             CharacterDevelopmentCampaignBehavior characterDevelopmentCampaignBehaviorInstance = Campaign.Current.CampaignBehaviorManager.GetBehavior<CharacterDevelopmentCampaignBehavior>();
-            characterDevelopmentCampaignBehaviorInstance.DevelopCharacterStats(_companionHero);
 
             //character.HeroObject = _companionHero;
             SetHeroObject!(conversationCharacter, _companionHero);
